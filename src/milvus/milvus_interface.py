@@ -1,11 +1,17 @@
 """
 milvus interface
 """
-from pymilvus import AsyncMilvusClient, MilvusClient
+from typing import List, Dict, Any
 
+from pymilvus import AsyncMilvusClient, MilvusClient, AnnSearchRequest, WeightedRanker
+
+from src.embeddings.jina_client import JinaEmbedder
 from src.milvus.schema import create_schema
 
 URL = "http://milvus-standalone:19530"
+RETRIEVAL_TOP_K = 20
+RERANKER_DENSE_FACTOR = 0.6
+RERANKER_SPARSE_FACTOR = 0.4
 
 class MilvusInterface:
     def __init__(self):
@@ -75,3 +81,61 @@ class MilvusInterface:
         check if milvus has collection
         """
         return self.client.has_collection(collection_name)
+
+    async def hybrid_search(self, collection_name: str, query: str) -> List[List[Dict[str, Any]]] | None:
+        """
+        perform hybrid search on milvus collection
+        collection_name: milvus collection name
+        query: search query
+        return: list of relevant chunks
+        """
+        if not self.has_collection(collection_name):
+            print(f"Collection {collection_name} does not exist.")
+            return
+
+        await self.async_client.load_collection(collection_name)
+        print(f"[MILVUS] {collection_name} collection loaded.")
+
+        jina_embedding_client = JinaEmbedder()
+        query_embedding = jina_embedding_client.get_embedding(
+            texts=[{"text": query}],
+            task="retrieval.query"
+        )
+
+        # --- DENSE (HNSW) ---
+        dense_search_params = {
+            "data": [query_embedding],
+            "anns_field": "dense_vector",
+            "param": {
+                "metric_type": "COSINE",
+                "params": {"ef": 4 * RETRIEVAL_TOP_K}
+            },
+            "limit": RETRIEVAL_TOP_K
+        }
+
+        # --- SPARSE (BM25) ---
+        sparse_search_params = {
+            "data": [query],
+            "anns_field": "sparse_vector",
+            "param": {
+                "params": {"drop_ratio_search": 0.2}
+            },
+            "limit": RETRIEVAL_TOP_K
+        }
+
+        # --- HYBRID ---
+        reqs = [AnnSearchRequest(**dense_search_params),
+                AnnSearchRequest(**sparse_search_params)]
+
+        ranker = WeightedRanker(RERANKER_DENSE_FACTOR,
+                                RERANKER_SPARSE_FACTOR)
+
+        result = await self.async_client.hybrid_search(
+            collection_name=collection_name,
+            reqs=reqs,
+            ranker=ranker,
+            limit=RETRIEVAL_TOP_K,
+            output_fields=['id', 'doc_name', 'party', 'page_number', 'year', 'content', 'metadata']
+        )
+
+        return result

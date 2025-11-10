@@ -1,17 +1,21 @@
 """
 milvus interface
 """
+import asyncio
 from typing import List, Dict, Any
 
 from pymilvus import AsyncMilvusClient, MilvusClient, AnnSearchRequest, WeightedRanker
 
+from src.chunking.models import Chunk
 from src.embeddings.jina_client import JinaEmbedder
 from src.milvus.schema import create_schema
 
-URL = "http://milvus-standalone:19530"
+# URL = "http://milvus-standalone:19530"
+URL = "http://localhost:19530"
 RETRIEVAL_TOP_K = 20
 RERANKER_DENSE_FACTOR = 0.6
 RERANKER_SPARSE_FACTOR = 0.4
+MILVUS_MAX_INSERT_BATCH_SIZE = 1000
 
 class MilvusInterface:
     def __init__(self):
@@ -25,7 +29,7 @@ class MilvusInterface:
         """
         create milvus collection
         """
-        if not self.has_collection(collection_name):
+        if self.has_collection(collection_name):
             return
 
         # create schema
@@ -65,6 +69,34 @@ class MilvusInterface:
             schema=schema,
             index_params=index_params,
         )
+        print(f"[MILVUS] Created collection {collection_name}")
+
+    async def insert_chunks(self, collection_name: str, chunks: List[Chunk]) -> None:
+        """
+        insert chunks into milvus collection
+        collection_name: milvus collection name
+        entities: list of chunk dicts
+        """
+        if not self.has_collection(collection_name):
+            print(f"Collection {collection_name} does not exist. Creating collection...")
+            await self.create_collection(collection_name)
+
+        # convert chunks to dicts
+        chunk_dicts = [await chunk.to_milvus_dict() for chunk in chunks]
+        chunk_dicts_batches = await self.create_chunk_batches_for_insert(chunk_dicts)
+        insert_tasks = [self.async_client.insert(collection_name, batch) for batch in chunk_dicts_batches]
+
+        await asyncio.gather(*insert_tasks)
+
+        # flush
+        self.client.flush(collection_name)
+
+        # release
+        await self.async_client.release_collection(collection_name)
+
+        print(f"[MILVUS] Added {len(chunks)} chunks to collection {collection_name}")
+
+
 
     async def drop_collection(self, collection_name: str) -> None:
         """
@@ -97,8 +129,8 @@ class MilvusInterface:
         print(f"[MILVUS] {collection_name} collection loaded.")
 
         jina_embedding_client = JinaEmbedder()
-        query_embedding = jina_embedding_client.get_embedding(
-            texts=[{"text": query}],
+        query_embedding = await jina_embedding_client.get_embedding(
+            text={"text": query},
             task="retrieval.query"
         )
 
@@ -139,3 +171,19 @@ class MilvusInterface:
         )
 
         return result
+
+    @staticmethod
+    async def create_chunk_batches_for_insert(chunk_dicts: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
+        """
+        Prevent too large insert error
+        """
+        n = MILVUS_MAX_INSERT_BATCH_SIZE
+        return [chunk_dicts[i: i + n] for i in range(0, len(chunk_dicts), n)]
+
+
+if __name__ == "__main__":
+    async def main():
+        interface = MilvusInterface()
+        await interface.create_collection("test_collection")
+
+    asyncio.run(main())

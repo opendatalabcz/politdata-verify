@@ -114,7 +114,7 @@ class MilvusInterface:
         """
         return self.client.has_collection(collection_name)
 
-    async def hybrid_search(self, collection_name: str, query: str) -> List[List[Dict[str, Any]]] | None:
+    async def hybrid_search(self, collection_name: str, query: str, **kwargs) -> List[List[Dict[str, Any]]] | None:
         """
         perform hybrid search on milvus collection
         collection_name: milvus collection name
@@ -128,6 +128,18 @@ class MilvusInterface:
         await self.async_client.load_collection(collection_name)
         print(f"[MILVUS] {collection_name} collection loaded.")
 
+        # building filter expression
+        year = kwargs.get("year", None)
+        party = kwargs.get("party", None)
+        filters = []
+        if party is not None:
+            filters.append(f"party == '{party}'")
+        if year is not None:
+            filters.append(f"year == {year}")
+
+        filter_expr = " and ".join(filters) if filters else ""
+
+        # get query embedding
         jina_embedding_client = JinaEmbedder()
         query_embedding = await jina_embedding_client.get_embedding(
             text={"text": query},
@@ -142,6 +154,7 @@ class MilvusInterface:
                 "metric_type": "COSINE",
                 "params": {"ef": 4 * RETRIEVAL_TOP_K}
             },
+            "expr": filter_expr,
             "limit": RETRIEVAL_TOP_K
         }
 
@@ -152,6 +165,7 @@ class MilvusInterface:
             "param": {
                 "params": {"drop_ratio_search": 0.2}
             },
+            "expr": filter_expr,
             "limit": RETRIEVAL_TOP_K
         }
 

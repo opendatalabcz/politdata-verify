@@ -5,10 +5,13 @@ import json
 import uuid
 
 from pydantic import BaseModel
-from typing import List, Optional, Any, Dict
+from typing import List, Any, Dict
 
 
 class Chunk(BaseModel):
+    """
+    Document chunk model
+    """
     id: uuid.UUID
     doc_name: str
     party: str

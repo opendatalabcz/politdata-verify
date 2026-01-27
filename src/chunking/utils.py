@@ -8,6 +8,7 @@ import fitz  # PyMuPDF
 import numpy as np
 
 from pydantic import HttpUrl
+PAGE_WIDTH_THRESHOLD = 600
 
 async def download_pdf_to_tmp(url: HttpUrl) -> str:
     """Download a PDF from URL to a temporary file and return its path."""
@@ -24,22 +25,43 @@ async def download_pdf_to_tmp(url: HttpUrl) -> str:
         f.write(resp.content)
     return tmp_path
 
-def extract_spans_with_sizes(pdf_path):
+def extract_spans_with_sizes(pdf_path, footer_margin = 30):
     doc = fitz.open(pdf_path)
     spans = []
 
     for page_num, page in enumerate(doc, start=1):
+
+        # trying to avoid footers by cutting off bottom margin
+        page_height = page.rect.height
+        page_width = page.rect.width
+        is_double_page = page_width > PAGE_WIDTH_THRESHOLD
+        mid_x = page_width / 2
+        cutoff_footer = page_height - footer_margin
+
         blocks = page.get_text("dict")["blocks"]
         for block in blocks:
             for line in block.get("lines", []):
-                for span in line.get("spans", []):
+                for i, span in enumerate(line.get("spans", [])):
+
+                    # Skip footer spans
+                    if span["bbox"][3] > cutoff_footer:
+                        continue
+
+                    if is_double_page:
+                        side = 0 if span["bbox"][0] < mid_x else 1
+                    else:
+                        side = 0
+
                     spans.append({
                         "text": span["text"],
                         "size": span["size"],        # REAL font size
                         "bbox": span["bbox"],
-                        "page": page_num
+                        "page": page_num,
+                        "line_start": (i==0),
+                        "side": side,
                     })
-    spans.sort(key=lambda s: (s["page"], s["bbox"][1], s["bbox"][0]))
+
+    spans.sort(key=lambda s: (s["page"], s["side"], s["bbox"][1], s["bbox"][0]))
     return spans
 
 def detect_headings(spans):
@@ -66,7 +88,8 @@ def group_blocks(spans):
             blocks.append(current)
             current = {"text": "", "is_heading": s["is_heading"], "page": s["page"]}
 
-        current["text"] += s["text"] + " "
+        sep = "\n" if s.get("line_start", False) else " "
+        current["text"] += sep + s["text"]
 
     if current["text"]:
         blocks.append(current)
@@ -77,7 +100,7 @@ if __name__ == "__main__":
     import asyncio
 
     async def main():
-        url = "https://majak.pirati.cz/documents/506/PROGRAM_PIRATU_2025.pdf"  # Replace with a valid PDF URL
+        url = "https://www.starostove.cz/files/dobry-program-starostove.pdf"  # Replace with a valid PDF URL
         tmp_path = await download_pdf_to_tmp(HttpUrl(url))
         spans = extract_spans_with_sizes(tmp_path)
         spans = detect_headings(spans)

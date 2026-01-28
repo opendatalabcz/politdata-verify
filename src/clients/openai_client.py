@@ -30,22 +30,25 @@ class Client:
         )
         return response.choices[0].message.content
 
-    def get_structured_response(self, messages: List[Dict[str, Any]], schema: Type[T], **kwargs) -> str:
+    def get_structured_response(self, messages: List[Dict[str, Any]], schema: Type[T], **kwargs) -> T:
         model = kwargs.get("model", MODEL)
         temperature = kwargs.get("temperature", TEMPERATURE)
-        response = self.client.responses.parse(
+        response = self.client.beta.chat.completions.parse(
+            messages=messages,  # type: ignore
             model=model,
-            input=messages,
-            text_format = schema,
             temperature=temperature,
+            response_format=schema
         )
-        return response.output_parsed
+        return response.choices[0].message.parsed
 
 if __name__ == "__main__":
     async def main():
         collection_name = "test_collection"
-        query = "ANO 2011 zvažuje zavedení rychlejších daňových odpisů"
-        context = await search(collection_name, query)
+        # party = "Motoristé sobě"
+        party = "Starostové a nezávislí"
+        query = "Hnutí STAN považuje českou korunu za klíčový prvek národní suverenity a v nadcházejícím volebním období odmítá jakékoli kroky k přijetí eura. V oblasti bezpečnosti pak plánuje snížit administrativní zátěž policie tím, že zavede povinnost Policie ČR vyjíždět ke všem dopravním nehodám bez ohledu na výši škody."
+        # query = "Hnutí plánuje reformu školství zachováním státních maturit a organizace CERMAT, ale s úpravou jejich obsahu. V ekonomické oblasti pak považuje přijetí eura za nevyhnutelný krok pro stabilitu českého exportu, ke kterému by mělo dojít v nadcházejícím volebním období."
+        context = await search(collection_name, query, party, 2025)
         ### FACT-CHECKING PROMPT ###
         system_prompt = """
         You are a context-STRICT fact checker.

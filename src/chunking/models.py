@@ -19,6 +19,7 @@ class Chunk(BaseModel):
     year: int
     content: str
     dense_vector: List[float]
+    summary: str
     metadata: Dict[str, Any]
 
     async def to_milvus_dict(self) -> Dict:

@@ -3,7 +3,7 @@ from typing import Dict, List, Any
 from src.milvus.milvus_interface import MilvusInterface
 CONTEXT_MAX_LEN = 70000
 
-async def search(collection_name: str, query: str) -> str:
+async def search(collection_name: str, query: str, **kwargs) -> str:
     """
     Perform hybrid search on milvus collection
 
@@ -16,11 +16,15 @@ async def search(collection_name: str, query: str) -> str:
     """
 
     interface = MilvusInterface()
+    year = kwargs.get("year", None)
+    party = kwargs.get("party", None)
 
     # search Milvus
     results = await interface.hybrid_search(
         collection_name=collection_name,
-        query=query
+        query=query,
+        party=party,
+        year=year
     )
     extracted_entities = [result['entity'] for result in results[0]]
 

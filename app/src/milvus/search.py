@@ -1,6 +1,6 @@
-from typing import Dict, List, Any
+from typing import Dict, List
 
-from src.milvus.milvus_interface import MilvusInterface
+from app.src.milvus.milvus_interface import MilvusInterface
 CONTEXT_MAX_LEN = 70000
 
 async def search(collection_name: str, query: str, **kwargs) -> str:

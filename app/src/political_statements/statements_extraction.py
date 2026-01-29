@@ -1,11 +1,10 @@
 """
 Module for extracting and analyzing political statements from text data.
 """
-from typing import List, Dict, Any
+from typing import List, Dict
 
-from playground.llm_interface_testing import Client
-from src.milvus.milvus_interface import MilvusInterface
-from src.political_statements.models import Statement, Statements
+from app.src.clients.openai_client import Client
+from app.src.political_statements.models import Statements
 
 
 def extract_political_statements(text: str) -> Statements:

@@ -6,11 +6,11 @@ from typing import List
 import tiktoken
 from pydantic import HttpUrl
 
-from src.chunking.enrichment import ContextEnricher
-from src.chunking.models import Chunk
-from src.chunking.utils import extract_spans_with_sizes, detect_headings, group_blocks, download_pdf_to_tmp
-from src.embeddings.jina_client import JinaEmbedder
-from src.milvus.milvus_interface import MilvusInterface
+from app.src.chunking.enrichment import ContextEnricher
+from app.src.chunking.models import Chunk
+from app.src.chunking.utils import extract_spans_with_sizes, detect_headings, group_blocks, download_pdf_to_tmp
+from app.src.embeddings.jina_client import JinaEmbedder
+from app.src.milvus.milvus_interface import MilvusInterface
 
 tokenizer = tiktoken.get_encoding("cl100k_base")  # Jina/OpenAI compatible
 

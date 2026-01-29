@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DG_API_KEY = os.getenv("DG_API_KEY")
-audio_path = "../../data/test_audio.mp3"
+audio_path = "../../../data/test_audio.mp3"
 
 # ----- Step 1: Transcribe locally -----
 start_time = time.perf_counter()

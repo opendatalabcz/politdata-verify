@@ -6,9 +6,9 @@ from typing import List, Dict, Any
 
 from pymilvus import AsyncMilvusClient, MilvusClient, AnnSearchRequest, WeightedRanker
 
-from src.chunking.models import Chunk
-from src.embeddings.jina_client import JinaEmbedder
-from src.milvus.schema import create_schema
+from app.src.chunking.models import Chunk
+from app.src.embeddings.jina_client import JinaEmbedder
+from app.src.milvus.schema import create_schema
 
 # URL = "http://milvus-standalone:19530"
 URL = "http://localhost:19530"

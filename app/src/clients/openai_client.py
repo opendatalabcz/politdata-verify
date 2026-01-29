@@ -6,7 +6,7 @@ import os
 
 from pydantic import BaseModel
 
-from src.milvus.search import search
+from app.src.milvus.search import search
 
 load_dotenv()
 
@@ -25,7 +25,7 @@ class Client:
         temperature = kwargs.get("temperature", TEMPERATURE)
         response = self.client.chat.completions.create(
             model=model,
-            messages=messages,
+            messages=messages, # type: ignore
             temperature=temperature,
         )
         return response.choices[0].message.content
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         party = "Starostové a nezávislí"
         query = "Hnutí STAN považuje českou korunu za klíčový prvek národní suverenity a v nadcházejícím volebním období odmítá jakékoli kroky k přijetí eura. V oblasti bezpečnosti pak plánuje snížit administrativní zátěž policie tím, že zavede povinnost Policie ČR vyjíždět ke všem dopravním nehodám bez ohledu na výši škody."
         # query = "Hnutí plánuje reformu školství zachováním státních maturit a organizace CERMAT, ale s úpravou jejich obsahu. V ekonomické oblasti pak považuje přijetí eura za nevyhnutelný krok pro stabilitu českého exportu, ke kterému by mělo dojít v nadcházejícím volebním období."
-        context = await search(collection_name, query, party, 2025)
+        context = await search(collection_name, query, party=party, year=2025)
         ### FACT-CHECKING PROMPT ###
         system_prompt = """
         You are a context-STRICT fact checker.

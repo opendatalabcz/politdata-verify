@@ -1,6 +1,4 @@
-import os
-import json
-from src.clients.openai_client import Client
+from app.src.clients.openai_client import Client
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 

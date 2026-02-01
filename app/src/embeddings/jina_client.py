@@ -32,7 +32,7 @@ class JinaEmbedder:
         }
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
-        print(response.json())
+        # print(response.json())
         data = response.json()["data"]
         embedding = data[0]["embedding"]
         return embedding

@@ -2,6 +2,7 @@
 milvus interface
 """
 import asyncio
+import os
 from typing import List, Dict, Any
 
 from pymilvus import AsyncMilvusClient, MilvusClient, AnnSearchRequest, WeightedRanker
@@ -10,8 +11,7 @@ from app.src.chunking.models import Chunk
 from app.src.embeddings.jina_client import JinaEmbedder
 from app.src.milvus.schema import create_schema
 
-# URL = "http://milvus-standalone:19530"
-URL = "http://localhost:19530"
+URL = os.getenv("MILVUS_URI", "http://milvus-standalone:19530")
 RETRIEVAL_TOP_K = 20
 RERANKER_DENSE_FACTOR = 0.6
 RERANKER_SPARSE_FACTOR = 0.4

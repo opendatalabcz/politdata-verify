@@ -10,6 +10,10 @@ from pymilvus import AsyncMilvusClient, MilvusClient, AnnSearchRequest, Weighted
 from app.src.chunking.models import Chunk
 from app.src.embeddings.jina_client import JinaEmbedder
 from app.src.milvus.schema import create_schema
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 URL = os.getenv("MILVUS_URI", "http://milvus-standalone:19530")
 RETRIEVAL_TOP_K = 20
@@ -95,6 +99,51 @@ class MilvusInterface:
         await self.async_client.release_collection(collection_name)
 
         print(f"[MILVUS] Added {len(chunks)} chunks to collection {collection_name}")
+
+    async def delete_chunks_by_party(self, collection_name: str, party_name) -> None:
+        """
+        delete chunks from milvus collection
+        collection_name: milvus collection name
+        party_name: party name to delete
+        """
+        if not self.has_collection(collection_name):
+            logger.warning(f"Collection {collection_name} does not exist.")
+            return
+
+        await self.async_client.load_collection(collection_name)
+
+        expr = f"party == '{party_name}'"
+
+        try:
+            chunks_count = self.client.query(collection_name=collection_name, expr=expr, output_fields=["count(*)"])
+            await self.async_client.delete(collection_name, expr)
+            logger.info(f"[MILVUS] Found and deleting {chunks_count[0]['count(*)']} chunks with party '{party_name}' from collection {collection_name}")
+        except Exception as e:
+            logger.error(f"[MILVUS] Error deleting chunks with party '{party_name}' from collection {collection_name}: {e}")
+            return
+
+        # release
+        await self.async_client.release_collection(collection_name)
+
+    async def get_number_of_chunks_by_party(self, collection_name: str, party: str) -> int:
+        """
+        get number of chunks in milvus collection
+        collection_name: milvus collection name
+        party: party name to filter
+        return: number of chunks
+        """
+        if not self.has_collection(collection_name):
+            logger.warning(f"Collection {collection_name} does not exist.")
+            return 0
+
+        await self.async_client.load_collection(collection_name)
+
+        expr = f"party == '{party}'"
+        chunks_count = self.client.query(collection_name=collection_name, filter=expr, output_fields=["count(*)"])
+
+        await self.async_client.release_collection(collection_name)
+        return chunks_count[0]['count(*)']
+
 
 
 

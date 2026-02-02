@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import List, Literal, Union
 
 from app.src.political_statements.models import ClassifiedStatement
-
+from pydantic import HttpUrl
 
 class Statement(BaseModel):
     """
@@ -23,12 +23,29 @@ class StatementsPayload(BaseModel):
     """
     statements: List[Statement]
 
+class Document(BaseModel):
+    """
+    Model representing a document.
+    """
+    url: str
+    name: str
+    collection_name: str
+    party: str | None = None
+    year: int | None = None
+
+class DocumentPayload(BaseModel):
+    """
+    Model representing a collection of documents.
+    """
+    documents: List[Document]
+
+
 class JobRequest(BaseModel):
     """
     Payload model for classify statement job.
     """
     job_id: uuid.UUID
-    payload: Union[StatementsPayload]
+    payload: Union[StatementsPayload, DocumentPayload]
 
 class ClassifyStatementJobResponse(BaseModel):
     """

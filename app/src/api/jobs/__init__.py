@@ -23,3 +23,19 @@ async def run_classify_statements_job(
     background_tasks.add_task(classify_statement_job, job_id, payload.model_dump())
 
     return {"status": "Classify statements job has been started", "job_id": str(job_id)}
+
+@router.post("/add_document")
+async def run_add_document_job(
+    request: JobRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Endpoint to start an add document job.
+    """
+    from app.src.api.jobs.add_document import add_document_job
+
+    job_id = request.job_id
+    payload = request.payload
+    background_tasks.add_task(add_document_job, job_id, payload.model_dump())
+
+    return {"status": "Add document job has been started", "job_id": str(job_id)}

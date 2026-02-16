@@ -1,0 +1,254 @@
+{
+  "SPD": [
+    {
+      "statement": "Zavedeme závazný zákon o referendu, ve kterém budou moci občané hlasovat i o vystoupení České republiky z EU.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Green Deal je pro nás příležitost k modernizaci, kterou musíme plně podpořit.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Odstoupíme od lipské burzy a ceny energií budeme určovat na státní úrovni prostřednictvím ERÚ.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Plánujeme zvýšit DPH na základní potraviny na 21 % pro posílení rozpočtu.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zrušíme koncesionářské poplatky pro seniory a osoby se zdravotním postižením.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Od roku 2026 úplně zastavíme veškerou humanitární pomoc uprchlíkům z Ukrajiny.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Odmítáme korespondenční volbu a budeme bránit jejímu zavedení.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zavedeme povinnou vojenskou službu pro všechny muže nad 18 let.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Navrhujeme zrušení Senátu jako zbytečné a drahé instituce.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zajistíme návrat k levnému plynu z Ruska prostřednictvím nových smluv s Gazpromem.",
+      "expected": "INSUFFICIENT"
+    }
+  ],
+  "Starostové a nezávislí": [
+    {
+      "statement": "Do tří měsíců od voleb jmenujeme vládního zmocněnce pro vstup do mechanismu směnných kurzů ERM II.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Sloučíme Grantovou agenturu ČR a Technologickou agenturu ČR do jednoho úřadu.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zřídíme samostatné Ministerstvo pro inovace, vědu a vysoké školy.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Snížíme celkové výdaje na školství o 5 %, abychom stabilizovali státní dluh.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zavedeme speciální spotřební daň na slazené nápoje.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Do roku 2027 postavíme 50 tisíc nových státních bytů v regionech.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Pravidelně budeme provádět revizi výdajů každé rozpočtové kapitoly jednou za pět let.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Zrušíme Senát ČR a převedeme jeho pravomoci na krajská zastupitelstva.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zvýšíme zdanění tabákových výrobků a tvrdého alkoholu.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Zavedeme povinné školné na všech veřejných vysokých školách.",
+      "expected": "INSUFFICIENT"
+    }
+  ],
+  "Piráti": [
+    {
+      "statement": "Zajistíme dostupnost bydlení skrze výstavbu 200 000 nových domovů.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Díky naší daňové reformě zůstane více peněz v peněžence 90 % českých rodin.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Prosazujeme zavedení sektorové daně pro všechny malé a střední firmy.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Cílíme na růst průměrné mzdy na 65 000 Kč do konce volebního období.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Využijeme umělou inteligenci k osekání byrokracie a zefektivnění veřejných služeb.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Navrhujeme vystoupení z NATO a vybudování nezávislé evropské armády.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zavedeme digitální účtenky a omezíme povinnost papírového dokladu.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Legalizujeme pěstování konopí pro osobní potřebu do roku 2026.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Snížíme náklady na výstavbu bytů o milion korun na jeden byt díky zrychlení procesů.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Zrušíme poplatky za veřejnoprávní televizi a rozhlas pro všechny občany bez výjimky.",
+      "expected": "INSUFFICIENT"
+    }
+  ],
+  "Motoristé sobě": [
+    {
+      "statement": "Budeme bránit českou korunu a vyjednáme trvalou výjimku z povinnosti přijmout euro.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Zrušíme Ministerstvo pro místní rozvoj jako zbytečný byrokratický aparát.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zvýšíme daň z příjmu právnických osob na 25 %, abychom zaplatili opravy silnic.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Snížíme dotace pro nevládní neziskové organizace o 26,7 miliardy korun.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Do čtyř let dosáhneme vyrovnaného státního rozpočtu.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Zavedeme nulovou spotřební daň na benzín a naftu pro všechny motoristy.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zrušíme post ministra pro evropské záležitosti.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Podporujeme zákaz spalovacích motorů od roku 2035 v souladu s evropskou legislativou.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zrušíme koncesionářské poplatky za rozhlas a televizi.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zavedeme povinné mýtné pro osobní auta na všech silnicích první třídy.",
+      "expected": "INSUFFICIENT"
+    }
+  ],
+  "SPOLU": [
+    {
+      "statement": "Naším cílem je zvýšit výdaje na obranu na 3 % HDP do roku 2030.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Hlavním nástrojem ozdravění financí bude zvýšení daně z příjmu fyzických osob.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Garantujeme učitelům průměrný plat ve výši 130 % průměrné mzdy v hospodářství.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zajistíme zachování výroby a provozu aut se spalovacími motory.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Vystoupíme z EU, pokud nedojde k okamžitému zrušení Green Dealu.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zavedeme tzv. daňovou brzdu, která zabrání nekontrolovanému zvyšování daní.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Snížíme počet ministerstev na maximálně 10 do roku 2027.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zvýšíme rozpočet na školství na úroveň 5,2 % HDP.",
+      "expected": "INSUFFICIENT"
+    },
+    {
+      "statement": "Zrušíme veškeré dotace pro obnovitelné zdroje energie.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Modernizujeme armádu nákupem techniky s důrazem na zapojení českých firem.",
+      "expected": "SUPPORTED"
+    }
+  ],
+  "ANO 2011": [
+    {
+      "statement": "Zvýšíme rodičovský příspěvek na 400 000 Kč s možností flexibilního čerpání.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Podporujeme zavedení emisních povolenek pro vytápění domácností a osobní dopravu.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Do roku 2029 dosáhnou platy učitelů v průměru 75 000 Kč.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Přijmeme euro jako hlavní měnu ČR nejpozději do ledna 2028.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zrušíme Ministerstvo pro vědu a výzkum.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Převedeme 50 % akcií ČEZu do rukou soukromých investorů pro zvýšení efektivity.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zvýšíme důchody pracujícím seniorům o 1,5 % za každý odpracovaný rok.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Zavedeme povinné kvóty pro přijímání nelegálních migrantů na území ČR.",
+      "expected": "CONTRADICTED"
+    },
+    {
+      "statement": "Zajistíme spravedlivý dřívější odchod do důchodu pro náročné profese.",
+      "expected": "SUPPORTED"
+    },
+    {
+      "statement": "Zastavíme veškeré investice do jaderné energetiky ve prospěch solárních panelů.",
+      "expected": "CONTRADICTED"
+    }
+  ]
+}

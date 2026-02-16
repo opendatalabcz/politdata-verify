@@ -5,7 +5,7 @@ from app.src.clients.openai_client import Client
 from app.src.milvus.search import search
 from app.src.political_statements.models import ClassifiedStatement
 
-MODEL = "gpt-4.1"
+MODEL = "gpt-5-mini"  # Use a more cost-effective model for classification tasks
 
 async def classify_statement(query: str, collection_name: str, **kwargs) -> ClassifiedStatement:
     """

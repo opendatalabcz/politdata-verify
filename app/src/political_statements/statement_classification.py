@@ -5,7 +5,7 @@ from app.src.clients.openai_client import Client
 from app.src.milvus.search import search
 from app.src.political_statements.models import ClassifiedStatement
 
-MODEL = "gpt-5"
+MODEL = "gpt-4.1"
 
 async def classify_statement(query: str, collection_name: str, **kwargs) -> ClassifiedStatement:
     """
@@ -21,7 +21,8 @@ async def classify_statement(query: str, collection_name: str, **kwargs) -> Clas
     """
     party = kwargs.get("party", None)
     year = kwargs.get("year", None)
-    context = await search(collection_name, query, party=party, year=year)
+    interface = kwargs.get("interface", None)
+    context = await search(collection_name, query, party=party, year=year, interface=interface)
     ### FACT-CHECKING PROMPT ###
     system_prompt = """
             You are a context-STRICT fact checker.

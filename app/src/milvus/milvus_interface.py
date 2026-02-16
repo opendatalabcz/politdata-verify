@@ -15,10 +15,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-URL = os.getenv("MILVUS_URI", "http://milvus-standalone:19530")
-RETRIEVAL_TOP_K = 20
-RERANKER_DENSE_FACTOR = 0.6
-RERANKER_SPARSE_FACTOR = 0.4
+# URL = os.getenv("MILVUS_URI", "http://milvus-standalone:19530")
+URL = "http://localhost:19530"
+RETRIEVAL_TOP_K = 50
+RERANKER_DENSE_FACTOR = 0.3
+RERANKER_SPARSE_FACTOR = 0.7
 MILVUS_MAX_INSERT_BATCH_SIZE = 1000
 
 class MilvusInterface:
@@ -28,6 +29,9 @@ class MilvusInterface:
         self.uri = URL
         self.async_client = AsyncMilvusClient(uri=self.uri)
         self.client = MilvusClient(uri=self.uri)
+
+    async def close(self):
+        await self.async_client.close()
 
     async def create_collection(self, collection_name: str) -> None:
         """

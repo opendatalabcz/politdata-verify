@@ -15,7 +15,7 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
         List[Dict[str, Any]]:    list of relevant chunks
     """
 
-    interface = MilvusInterface()
+    interface = kwargs.get("interface", MilvusInterface())
     year = kwargs.get("year", None)
     party = kwargs.get("party", None)
 
@@ -33,9 +33,9 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
     else:
         print(f"[MILVUS SEARCH] Found {len(extracted_entities)} results in collection {collection_name} for query: {query}")
 
-    i = 0
     context = "<context>\n"
-    for chunk in extracted_entities:
+    for idx, chunk in enumerate(extracted_entities):
+        print(f"RANK {idx + 1} | Page: {chunk['page_number']} | Content: {chunk['content'][:100]}...")
         context += (
         f"<document>\n"
         f"<year>\n{chunk['year']}\n</year>\n"
@@ -44,8 +44,7 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
         f"<metadata>\n{chunk['metadata']}\n</metadata>\n"
         f"<content>\n{chunk['content']}\n</content>\n"
         f"</document>\n")
-        if i == 0:
+        if idx == 0:
             print(f"Most relevant chunk: {context}")
-        i += 1
     context += "</context>\n"
     return context[:CONTEXT_MAX_LEN]

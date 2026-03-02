@@ -2,11 +2,42 @@ import re
 import zipfile
 import io
 from functools import lru_cache
+from typing import List
+
 import requests
 
-from app.src.political_statements.models import Speakers, Speaker
+from app.src.political_statements.models import Speakers, Speaker, ClassifiedStatementWithContext, ExtractionResult, \
+    SpeakerStats, StatsResult
 
 URL = "https://www.psp.cz/eknih/cdrom/opendata/poslanci.zip"
+
+def generate_stats(classified_statements: List[ClassifiedStatementWithContext], extracted_statements: ExtractionResult)\
+        -> StatsResult:
+    all_statements = len([statement for speaker in extracted_statements.speakers for statement in speaker.statements])
+    all_speakers = len(extracted_statements.speakers)
+
+    speakers = set()
+    for speaker_statements in extracted_statements.speakers:
+        speaker = speaker_statements.speaker
+        speakers.add(speaker.name)
+
+    speakers_stats = []
+    for speaker in speakers:
+        speaker_statements = [s for s in classified_statements if s.speaker == speaker]
+        total_statements = len(speaker_statements)
+        supported = [s for s in speaker_statements if s.verdict == "SUPPORTED"]
+        contradicted = [s for s in speaker_statements if s.verdict == "CONTRADICTED"]
+        insufficient = [s for s in speaker_statements if s.verdict == "INSUFFICIENT"]
+        party = next((s.party for s in classified_statements if s.speaker == speaker), "Unknown")
+        speakers_stats.append(SpeakerStats(
+            speaker=speaker,
+            party=party,
+            total_statements=total_statements,
+            supported=supported,
+            contradicted=contradicted,
+            insufficient=insufficient
+        ))
+    return StatsResult(total_speakers=all_speakers, total_statements=all_statements, speakers_stats=speakers_stats)
 
 def debug_psp():
     r = requests.get(URL, timeout=30)

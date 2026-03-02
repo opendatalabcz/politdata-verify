@@ -41,3 +41,24 @@ class ClassifiedStatement(BaseModel):
     rationale: str
     evidence: List[Evidence]
     confidence: float
+
+class ClassifiedStatementWithContext(ClassifiedStatement):
+    """
+    Model representing a classified political statement with additional context.
+    """
+    speaker: str
+    party: str
+    statement: str
+
+class SpeakerStats(BaseModel):
+    speaker: str
+    party: str
+    total_statements: int
+    supported: List[ClassifiedStatementWithContext]
+    contradicted: List[ClassifiedStatementWithContext]
+    insufficient: List[ClassifiedStatementWithContext]
+
+class StatsResult(BaseModel):
+    total_speakers: int
+    total_statements: int
+    speakers_stats: List[SpeakerStats]

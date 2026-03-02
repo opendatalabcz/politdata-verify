@@ -11,7 +11,6 @@ from app.src.chunking.pdf_chunker import pdf_chunker
 from app.src.milvus.milvus_interface import MilvusInterface
 from pydantic import HttpUrl
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 async def add_document_job(job_id: uuid.UUID, payload: DocumentPayload):

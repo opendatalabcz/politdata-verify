@@ -11,7 +11,6 @@ from app.src.clients.openai_client import Client
 from app.src.political_statements.models import ClassifiedStatement
 from app.src.political_statements.statement_classification import classify_statement
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 async def classify_statement_job(job_id: uuid.UUID, payload: StatementsPayload):

@@ -2,6 +2,7 @@
 main pipeline
 """
 import asyncio
+import logging
 import time
 
 from app.src.clients.openai_client import Client
@@ -10,9 +11,10 @@ from app.src.political_statements.models import Speakers, StatsResult
 from app.src.political_statements.statement_classification import classify_statement, classify_with_context
 from app.src.political_statements.statements_extraction import extract_political_statements
 from app.src.political_statements.utils import generate_stats
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-
-async def verify_political_statements_job(text: str, speakers_list: Speakers = None,
+async def verify_political_statements(text: str, speakers_list: Speakers = None,
                                           collection_name: str = "test_collection",
                                           year: int = 2025) -> StatsResult:
     """
@@ -24,15 +26,15 @@ async def verify_political_statements_job(text: str, speakers_list: Speakers = N
     start_time = time.perf_counter()
     extracted_statements = await extract_political_statements(text, speakers_list)
     end_time = time.perf_counter()
-    print(f"[EXTRACTION] Extracted statements in {end_time - start_time:.2f} seconds.")
-    print(f"[EXTRACTION] Extracted statements for {len(extracted_statements.speakers)} speakers.")
+    logger.info(f"[EXTRACTION] Extracted statements in {end_time - start_time:.2f} seconds.")
+    logger.info(f"[EXTRACTION] Extracted statements for {len(extracted_statements.speakers)} speakers.")
     # For each extracted statement, classify it and store the results
     client = Client()
     interface = MilvusInterface()
     tasks = []
     for speaker_statements in extracted_statements.speakers:
         if not speaker_statements.speaker.party:
-            print (f"[CLASSIFICATION] Skipping speaker {speaker_statements.speaker.name} due to missing party affiliation.")
+            logger.warning (f"[CLASSIFICATION] Skipping speaker {speaker_statements.speaker.name} due to missing party affiliation.")
             continue
         for statement in speaker_statements.statements:
             tasks.append(classify_with_context(
@@ -43,12 +45,13 @@ async def verify_political_statements_job(text: str, speakers_list: Speakers = N
                 milvus_interface=interface,
                 year=year
             ))
-    print(f"[CLASSIFICATION] Starting classification of {len(tasks)} statements.")
+    logger.info(f"[CLASSIFICATION] Starting classification of {len(tasks)} statements.")
     start_time = time.perf_counter()
     classifications = await asyncio.gather(*tasks)
     end_time = time.perf_counter()
-    print(f"[CLASSIFICATION] Completed classification in {end_time - start_time:.2f} seconds.")
+    logger.info(f"[CLASSIFICATION] Completed classification in {end_time - start_time:.2f} seconds.")
     stats = generate_stats(classifications, extracted_statements)
+    stats.pretty_print()
     return stats
 
 
@@ -64,7 +67,7 @@ if __name__ == "__main__":
             Ministr práce a sociálních věcí ČR Aleš Juchelka: Samozřejmě, že tady tato vládní koalice, která sedí za mnou, myslí na mladé rodiny, myslí na bydlení, myslí na podporu a bude v rámci prorodinného balíčku naopak dělat něco jako je DSSP 2 i pro rodinný přídavek na dítě, například i na věcný systém různých podpor pro ty sociálně slabé. Opravdu jsme vláda, která pracuje pro občany České republiky, včetně mladých rodin i včetně zranitelných skupin i včetně ohrožených dětí, a máme to v našem programovém prohlášení vlády, které je skvělé. Děkuji.
             """
         start = time.perf_counter()
-        result = await verify_political_statements_job(text)
+        result = await verify_political_statements(text)
         end = time.perf_counter()
         print(result.model_dump_json(indent=2, ensure_ascii=False))
         print(f"Extraction took {end - start:.2f} seconds")

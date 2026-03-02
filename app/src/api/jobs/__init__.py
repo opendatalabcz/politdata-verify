@@ -39,3 +39,16 @@ async def run_add_document_job(
     background_tasks.add_task(add_document_job, job_id, payload.model_dump())
 
     return {"status": "Add document job has been started", "job_id": str(job_id)}
+
+@router.post("/verify_political_statements")
+async def verify_political_statements(request: JobRequest, background_tasks: BackgroundTasks):
+    """
+    Endpoint to start a verify political statements job.
+    """
+    from app.src.api.jobs.verify_political_statements import verify_political_statements_job
+
+    job_id = request.job_id
+    payload = request.payload
+    background_tasks.add_task(verify_political_statements_job, job_id, payload)
+
+    return {"status": "Verify political statements job has been started", "job_id": str(job_id)}

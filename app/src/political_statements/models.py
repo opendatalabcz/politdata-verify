@@ -1,9 +1,12 @@
 """
 Module for models related to political statements.
 """
+import logging
 
 from pydantic import BaseModel
 from typing import Dict, Any, List, Literal
+
+logger = logging.getLogger(__name__)
 
 class Speaker(BaseModel):
     name: str
@@ -62,3 +65,19 @@ class StatsResult(BaseModel):
     total_speakers: int
     total_statements: int
     speakers_stats: List[SpeakerStats]
+
+    def pretty_print(self):
+        logger.info(f"Total Speakers: {self.total_speakers}")
+        logger.info(f"Total Statements: {self.total_statements}")
+        for speaker_stat in self.speakers_stats:
+            logger.info(f"\nSpeaker: {speaker_stat.speaker} ({speaker_stat.party})")
+            logger.info(f"  Total Statements: {speaker_stat.total_statements}")
+            logger.info(f"  Supported: {len(speaker_stat.supported)}")
+            for s in speaker_stat.supported:
+                logger.info(f"    - {s.statement} (Confidence: {s.confidence:.2f})")
+            logger.info(f"  Contradicted: {len(speaker_stat.contradicted)}")
+            for s in speaker_stat.contradicted:
+                logger.info(f"    - {s.statement} (Confidence: {s.confidence:.2f})")
+            logger.info(f"  Insufficient: {len(speaker_stat.insufficient)}")
+            for s in speaker_stat.insufficient:
+                logger.info(f"    - {s.statement} (Confidence: {s.confidence:.2f})")

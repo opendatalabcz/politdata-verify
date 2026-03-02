@@ -5,8 +5,17 @@ import uuid
 from pydantic import BaseModel
 from typing import List, Literal, Union
 
-from app.src.political_statements.models import ClassifiedStatement
-from pydantic import HttpUrl
+from app.src.political_statements.models import ClassifiedStatement, Speaker, StatsResult
+
+class VerifyStatementsPayload(BaseModel):
+    """
+    Model representing a political statement verification request.
+    """
+    text: str
+    speaker_list: List[Speaker] | None = None
+    collection_name: str = "test_collection"
+    year: int = 2025
+
 
 class Statement(BaseModel):
     """
@@ -45,7 +54,7 @@ class JobRequest(BaseModel):
     Payload model for classify statement job.
     """
     job_id: uuid.UUID
-    payload: Union[StatementsPayload, DocumentPayload]
+    payload: Union[StatementsPayload, DocumentPayload, VerifyStatementsPayload]
 
 class ClassifyStatementJobResponse(BaseModel):
     """
@@ -53,5 +62,12 @@ class ClassifyStatementJobResponse(BaseModel):
     """
     type: Literal["STATEMENT_CLASSIFICATION"] = "STATEMENT_CLASSIFICATION"
     classified_statements: List[ClassifiedStatement]
+
+class VerifyPoliticalStatementsJobResponse(BaseModel):
+    """
+    Response model for verify political statements job.
+    """
+    type: Literal["VERIFY_POLITICAL_STATEMENTS"] = "VERIFY_POLITICAL_STATEMENTS"
+    stats: StatsResult
 
 

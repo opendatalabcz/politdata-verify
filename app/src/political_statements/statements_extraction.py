@@ -3,7 +3,6 @@ Module for extracting and analyzing political statements from text data.
 """
 import asyncio
 import time
-from typing import List, Dict
 
 from app.src.clients.openai_client import Client
 from app.src.political_statements.models import Speakers, SpeakerStatements, ExtractionResult

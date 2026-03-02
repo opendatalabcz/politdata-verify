@@ -11,18 +11,20 @@ async def classify_with_context(
     client,
     speaker,
     statement,
+    semaphore,
     collection_name,
     milvus_interface,
     year
 ) -> ClassifiedStatementWithContext:
-    verdict = await classify_statement(
-        query=statement,
-        collection_name=collection_name,
-        client=client,
-        interface=milvus_interface,
-        party=speaker.party,
-        year=year
-    )
+    async with semaphore:
+        verdict = await classify_statement(
+            query=statement,
+            collection_name=collection_name,
+            client=client,
+            interface=milvus_interface,
+            party=speaker.party,
+            year=year
+        )
 
     return ClassifiedStatementWithContext(
         speaker=speaker.name,

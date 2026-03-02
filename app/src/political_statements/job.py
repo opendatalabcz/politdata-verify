@@ -13,6 +13,7 @@ from app.src.political_statements.statements_extraction import extract_political
 from app.src.political_statements.utils import generate_stats
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+semaphore = asyncio.Semaphore(5)
 
 async def verify_political_statements(text: str, speakers_list: Speakers = None,
                                           collection_name: str = "test_collection",
@@ -41,6 +42,7 @@ async def verify_political_statements(text: str, speakers_list: Speakers = None,
                 client=client,
                 speaker=speaker_statements.speaker,
                 statement=statement.statement,
+                semaphore=semaphore,
                 collection_name=collection_name,
                 milvus_interface=interface,
                 year=year

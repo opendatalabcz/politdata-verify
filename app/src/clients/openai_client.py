@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, TypeVar, Type
 
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
 import os
 
@@ -17,6 +17,7 @@ T = TypeVar("T", bound=BaseModel)
 class Client:
     def __init__(self, **kwargs):
         self.client = OpenAI(api_key=API_KEY)
+        self.async_client = AsyncOpenAI(api_key=API_KEY)
 
     def create_completions(self, messages: List[Dict[str, Any]], **kwargs) -> str:
         model = kwargs.get("model", MODEL)
@@ -28,10 +29,31 @@ class Client:
         )
         return response.choices[0].message.content
 
+    async def create_completions_async(self, messages: List[Dict[str, Any]], **kwargs) -> str:
+        model = kwargs.get("model", MODEL)
+        temperature = kwargs.get("temperature", TEMPERATURE)
+        response = await self.async_client.chat.completions.create(
+            model=model,
+            messages=messages, # type: ignore
+            temperature=temperature,
+        )
+        return response.choices[0].message.content
+
     def get_structured_response(self, messages: List[Dict[str, Any]], schema: Type[T], **kwargs) -> T:
         model = kwargs.get("model", MODEL)
         temperature = kwargs.get("temperature", TEMPERATURE)
         response = self.client.beta.chat.completions.parse(
+            messages=messages,  # type: ignore
+            model=model,
+            temperature=temperature,
+            response_format=schema
+        )
+        return response.choices[0].message.parsed
+
+    async def get_structured_response_async(self, messages: List[Dict[str, Any]], schema: Type[T], **kwargs) -> T:
+        model = kwargs.get("model", MODEL)
+        temperature = kwargs.get("temperature", TEMPERATURE)
+        response = await self.async_client.beta.chat.completions.parse(
             messages=messages,  # type: ignore
             model=model,
             temperature=temperature,

@@ -3,17 +3,46 @@ file to classify political statements
 """
 from app.src.clients.openai_client import Client
 from app.src.milvus.search import search
-from app.src.political_statements.models import ClassifiedStatement
+from app.src.political_statements.models import ClassifiedStatement, ClassifiedStatementWithContext
 
-MODEL = "gpt-5-mini"  # Use a more cost-effective model for classification tasks
+MODEL = "gpt-4o-mini"
 
-async def classify_statement(query: str, collection_name: str, **kwargs) -> ClassifiedStatement:
+async def classify_with_context(
+    client,
+    speaker,
+    statement,
+    collection_name,
+    milvus_interface,
+    year
+) -> ClassifiedStatementWithContext:
+    verdict = await classify_statement(
+        query=statement,
+        collection_name=collection_name,
+        client=client,
+        interface=milvus_interface,
+        party=speaker.party,
+        year=year
+    )
+
+    return ClassifiedStatementWithContext(
+        speaker=speaker.name,
+        party=speaker.party,
+        statement=statement,
+        verdict=verdict.verdict,
+        rationale=verdict.rationale,
+        evidence=verdict.evidence,
+        confidence=verdict.confidence
+    )
+
+
+async def classify_statement(query: str, collection_name: str, client: Client, **kwargs) -> ClassifiedStatement:
     """
     Classify a political statement into predefined categories.
 
     Args:
         query (str): The political statement to classify.
         collection_name (str): The name of the Milvus collection to search for context.
+        client (Client): An instance of the OpenAI client to use for classification.
         **kwargs: Additional keyword arguments, such as 'party' and 'year'.
 
     Returns:
@@ -70,6 +99,5 @@ async def classify_statement(query: str, collection_name: str, **kwargs) -> Clas
             "content": f"{context}, <query>{query}</query>",
         },
     ]
-    client = Client()
-    answer = client.get_structured_response(messages, schema=ClassifiedStatement, model=MODEL)
+    answer = await client.get_structured_response_async(messages, schema=ClassifiedStatement, model=MODEL)
     return answer

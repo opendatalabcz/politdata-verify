@@ -38,7 +38,7 @@ async def generate_multi_queries(query: str) -> Queries:
         {"role": "user", "content": f"Generate search queries for: {query}"}
     ]
     client = Client()
-    queries = client.get_structured_response(messages, schema=Queries, model=MODEL)
+    queries = await client.get_structured_response_async(messages, schema=Queries, model=MODEL)
     return queries
 
 async def search(collection_name: str, query: str, **kwargs) -> str:

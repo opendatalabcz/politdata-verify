@@ -7,6 +7,7 @@ import uuid
 from typing import List
 from fastapi.responses import JSONResponse
 from app.src.api.models import Statement, ClassifyStatementJobResponse, StatementsPayload
+from app.src.clients.openai_client import Client
 from app.src.political_statements.models import ClassifiedStatement
 from app.src.political_statements.statement_classification import classify_statement
 
@@ -18,12 +19,14 @@ async def classify_statement_job(job_id: uuid.UUID, payload: StatementsPayload):
     Placeholder function for classifying statements job.
     """
 
+    client = Client()
     statements: List[Statement] = [Statement(**s) for s in payload["statements"]]
     results: List[ClassifiedStatement] = []
     for statement in statements:
         classification = await classify_statement(
             query=statement.query,
             collection_name=statement.collection_name,
+            client=client,
             party=statement.party,
             year=statement.year
         )

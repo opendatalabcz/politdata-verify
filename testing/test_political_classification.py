@@ -1,6 +1,8 @@
 import pytest
 import json
 import asyncio
+
+from app.src.clients.openai_client import Client
 from app.src.milvus.milvus_interface import MilvusInterface
 from app.src.political_statements.statement_classification import classify_statement
 
@@ -25,10 +27,12 @@ async def test_political_statement_classification(party, statement, expected_ver
                                                   collection_name="test_collection"):
 
     interface = MilvusInterface()
+    client = Client()
 
     result = await classify_statement(
         query=statement,
         collection_name=collection_name,
+        client=client,
         party=party,
         year=2025,
         interface=interface

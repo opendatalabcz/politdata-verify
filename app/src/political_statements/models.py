@@ -5,18 +5,24 @@ Module for models related to political statements.
 from pydantic import BaseModel
 from typing import Dict, Any, List, Literal
 
-class Statement(BaseModel):
-    """
-    Model representing a political statement.
-    """
-    text: str
-    metadata: Dict[str, Any]
+class Speaker(BaseModel):
+    name: str
+    party: str | None = None
 
-class Statements(BaseModel):
-    """
-    Model representing a collection of political statements.
-    """
+class Speakers(BaseModel):
+    speakers: List[Speaker]
+
+class Statement(BaseModel):
+    statement: str
+    original_quote: str
+    confidence: float
+
+class SpeakerStatements(BaseModel):
+    speaker: Speaker
     statements: List[Statement]
+
+class ExtractionResult(BaseModel):
+    speakers: List[SpeakerStatements]
 
 CLASSIFICATION = Literal["SUPPORTED", "CONTRADICTED", "INSUFFICIENT"]
 

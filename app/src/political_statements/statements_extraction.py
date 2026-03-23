@@ -8,31 +8,36 @@ from app.src.clients.openai_client import Client
 from app.src.political_statements.models import Speakers, SpeakerStatements, ExtractionResult
 from app.src.political_statements.utils import resolve_party
 
-MODEL = "gpt-4o-mini"
+MODEL = "gpt-4o"
 
 SPEAKER_PROMPT = """
 Read the entire text and identify all speakers who make political statements.
-For each speaker provide their full name and party ONLY if explicitly mentioned in the text.
-Do not guess party from outside knowledge.
+For each speaker provide their name, surname and party ONLY if explicitly mentioned in the text.
+Do not guess the party from outside knowledge.
 """
 
 STATEMENT_PROMPT = """
 You are extracting political statements made by {speaker_name} from the text below.
 
-RULES:
-- Extract ONLY statements clearly attributable to {speaker_name}
-- One statement = one atomic political claim
-- Make each statement self-contained — resolve references using full context
-- Skip procedural remarks, greetings, meta-commentary
-- confidence: how certain you are this statement belongs to {speaker_name}
-- return statements in czech language
-  1.0 = speaker said it directly
-  0.7 = attributed indirectly ("podle něj...", "uvedl že...")
-  below 0.6 = skip it
+STRICT RULES:
+1. Extract ONLY statements clearly attributable to {speaker_name}.
+2. One statement = one atomic political claim (a unique policy proposal, criticism, or stated goal).
+3. Make each statement self-contained — resolve pronouns (he, it, this law) to their actual nouns using the full context.
+4. HOW TO SPLIT (Crucial):
+   - Keep cause and effect together in ONE statement (e.g., "We oppose this tax because it hurts families").
+   - Separate distinct proposals into DIFFERENT statements (e.g., "We want to lower taxes" AND "We will build more schools").
+5. Skip procedural remarks ("Thank you", "I have a point"), greetings, and meta-commentary.
+6. Return statements in the Czech language.
+
+EXAMPLES:
+Text: "Reforma superdávky je podle nás špatně nastavená, protože lidé neví, kolik dostanou. Záleží nám na tom, aby zranitelní lidé měli ochranu."
+-> Statement 1: "Reforma sociálních dávek (superdávka) je špatně nastavená, protože lidé nemají jistotu ohledně výše podpory."
+-> Statement 2: "Zranitelní lidé musí mít dostatečnou sociální ochranu."
 
 Text:
 {text}
 """
+
 
 async def find_speakers(text: str) -> Speakers:
     client = Client()
@@ -40,7 +45,13 @@ async def find_speakers(text: str) -> Speakers:
         {"role": "system", "content": SPEAKER_PROMPT},
         {"role": "user", "content": text},
     ]
-    return await client.get_structured_response_async(messages, schema=Speakers, model=MODEL)
+    return await client.get_structured_response_async(
+        messages,
+        schema=Speakers,
+        model=MODEL,
+        temperature=0.0,
+    )
+
 
 async def extract_statements_for_speaker(text: str, speaker_name: str) -> SpeakerStatements:
     client = Client()
@@ -50,8 +61,12 @@ async def extract_statements_for_speaker(text: str, speaker_name: str) -> Speake
         )},
         {"role": "user", "content": f"Extract statements for {speaker_name}"},
     ]
-    return await client.get_structured_response_async(messages, schema=SpeakerStatements, model=MODEL)
-
+    return await client.get_structured_response_async(
+        messages,
+        schema=SpeakerStatements,
+        model=MODEL,
+        temperature=0.0,
+    )
 
 
 async def extract_political_statements(text: str, speakers_list: Speakers = None) -> ExtractionResult:
@@ -59,6 +74,7 @@ async def extract_political_statements(text: str, speakers_list: Speakers = None
     start = time.time()
     speakers = await find_speakers(text)
     print(f"find_speakers: {time.time() - start:.2f}s")
+
     tasks = [extract_statements_for_speaker(text, speaker.name) for speaker in speakers.speakers]
     start = time.time()
     results = await asyncio.gather(*tasks)
@@ -97,6 +113,13 @@ Místopředseda PSP Patrik Nacher: Děkuji, paní předsedkyně. V této chvíli
         end = time.perf_counter()
         print(result.model_dump_json(indent=2, ensure_ascii=False))
         print(f"Extraction took {end - start:.2f} seconds")
+        num_speakers = len(result.speakers)
+        total_statements = sum(len(speaker_group.statements) for speaker_group in result.speakers)
+
+        print(f"Number of speakers: {num_speakers}")
+        print(f"Total statements: {total_statements}")
+        assert(num_speakers == 2, "Expected 2 speakers to be extracted.")
+        assert(13>= total_statements >= 11, "Expected between 11 and 13 statements to be extracted based on the provided text.")
 
     asyncio.run(main())
 

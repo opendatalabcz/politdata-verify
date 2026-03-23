@@ -1,5 +1,6 @@
 import pytest
 from collections import defaultdict
+from app.src.clients.openai_client import token_counter
 
 # Dictionary to store results globally for the session
 session_results = []
@@ -66,3 +67,17 @@ def pytest_sessionfinish(session, exitstatus):
             f.write(f"| {d['party']} | {d['statement']} | {d['expected']} | {clean_error} |\n")
 
     print("\n[REPORT] Markdown summary generated: test_report.md")
+
+    # Print token usage at the end
+    token_stats = token_counter.get_stats()
+    print("\n" + "═" * 60)
+    print("TOKEN USAGE SUMMARY")
+    print("═" * 60)
+    print(f"Total Input Tokens:     {token_stats['total_input_tokens']:,}")
+    print(f"Total Output Tokens:    {token_stats['total_output_tokens']:,}")
+    print(f"Total Tokens:           {token_stats['total_tokens']:,}")
+    print(f"API Calls:              {token_stats['num_calls']}")
+    if token_stats['num_calls'] > 0:
+        avg_tokens = token_stats['total_tokens'] / token_stats['num_calls']
+        print(f"Average Tokens/Call:    {avg_tokens:.1f}")
+    print("═" * 60)

@@ -3,25 +3,32 @@ Module for models related to political statements.
 """
 import logging
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Literal
 
 logger = logging.getLogger(__name__)
 
 class Speaker(BaseModel):
     name: str
+    surname: str
     party: str | None = None
 
 class Speakers(BaseModel):
     speakers: List[Speaker]
 
 class Statement(BaseModel):
-    statement: str
-    original_quote: str
-    confidence: float
+    reasoning: str = Field(
+        description="Explain step-by-step why this text contains exactly ONE atomic political claim. Mention how you resolved any pronouns (e.g., 'it' -> 'the new tax law'). If there are multiple distinct claims, explain why they are separate."
+    )
+    statement: str = Field(
+        description="The extracted, self-contained political statement in Czech language."
+    )
+    confidence: float = Field(
+        description="1.0 if the speaker said it directly, 0.7 if attributed indirectly, below 0.6 if unsure."
+    )
 
 class SpeakerStatements(BaseModel):
-    speaker: Speaker
+    speaker: "Speaker"
     statements: List[Statement]
 
 class ExtractionResult(BaseModel):

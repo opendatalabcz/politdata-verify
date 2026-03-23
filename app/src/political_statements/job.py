@@ -11,7 +11,6 @@ from app.src.political_statements.models import Speakers, StatsResult
 from app.src.political_statements.statement_classification import classify_statement, classify_with_context
 from app.src.political_statements.statements_extraction import extract_political_statements
 from app.src.political_statements.utils import generate_stats
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 semaphore = asyncio.Semaphore(5)
 

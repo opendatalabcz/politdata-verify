@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List
 from collections import Counter
 
@@ -5,9 +6,10 @@ from app.src.clients.openai_client import Client
 from app.src.milvus.milvus_interface import MilvusInterface
 from pydantic import BaseModel
 
-MODEL = "gpt-5-mini"
+logger = logging.getLogger(__name__)
+MODEL = "gpt-4o-mini"
 CONTEXT_MAX_LEN = 70000
-TOP_K = 20
+TOP_K = 40
 
 class Queries(BaseModel):
     queries: List[str]
@@ -58,7 +60,9 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
     party = kwargs.get("party", None)
 
     all_chunks = []
+    logger.info(f"[MILVUS SEARCH] Generating multiple queries for: {query}")
     queries_obj = await generate_multi_queries(query)
+    logger.info(f"[MILVUS SEARCH] Generated queries: {queries_obj.queries}")
 
     for q in queries_obj.queries:
         results = await interface.hybrid_search(
@@ -78,10 +82,10 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
     final_selection = [id_to_chunk[cid] for cid in most_frequent_ids]
 
     if not final_selection:
-        print(f"[MILVUS SEARCH] No results found for query: {query}")
+        logger.warning(f"[MILVUS SEARCH] No results found for query: {query}")
         return "<context>\n</context>"
 
-    print(
+    logger.info(
         f"[MILVUS SEARCH] Collected {len(all_chunks)} total hits. Reduced to {len(final_selection)} unique high-confidence chunks.")
 
     context = "<context>\n"
@@ -95,6 +99,6 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
         f"<content>\n{chunk['content']}\n</content>\n"
         f"</document>\n")
         if idx == 0:
-            print(f"Most relevant chunk: {context}")
+            logger.info(f"Most relevant chunk: {context}")
     context += "</context>\n"
     return context[:CONTEXT_MAX_LEN]

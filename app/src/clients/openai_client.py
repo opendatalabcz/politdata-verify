@@ -51,8 +51,8 @@ token_counter = TokenCounter()
 
 class Client:
     def __init__(self, **kwargs):
-        self.client = OpenAI(api_key=API_KEY)
-        self.async_client = AsyncOpenAI(api_key=API_KEY)
+        self.client = OpenAI(api_key=API_KEY, max_retries=6, timeout=120.0)
+        self.async_client = AsyncOpenAI(api_key=API_KEY, max_retries=6, timeout=120.0)
 
     def create_completions(self, messages: List[Dict[str, Any]], **kwargs) -> str:
         model = kwargs.get("model", MODEL)

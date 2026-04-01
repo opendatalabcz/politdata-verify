@@ -15,9 +15,9 @@ def pytest_runtest_makereport(item, call):
         params = item.callspec.params
 
         report.test_metadata = {
-            "party": params["party"],
-            "statement": params["statement"],
-            "expected": params["expected_verdict"],
+            "party": params.get("party", ""),
+            "statement": params.get("statement", ""),
+            "expected": params.get("expected_verdict", ""),
             "status": "PASSED" if report.passed else "FAILED"
         }
 

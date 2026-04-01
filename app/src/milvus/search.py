@@ -55,7 +55,7 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
         List[Dict[str, Any]]:    list of relevant chunks
     """
 
-    interface = kwargs.get("interface", MilvusInterface())
+    interface = kwargs.get("interface") or MilvusInterface()
     year = kwargs.get("year", None)
     party = kwargs.get("party", None)
 
@@ -102,3 +102,11 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
             logger.info(f"Most relevant chunk: {context}")
     context += "</context>\n"
     return context[:CONTEXT_MAX_LEN]
+
+if __name__ == "__main__":
+    async def main():
+        query = "Financování televize a rozhlasu by už nemělo být plošnou zátěží pro peněženky občanů formou povinných plateb."
+        queries = await generate_multi_queries(query)
+        print(queries)
+    import asyncio
+    asyncio.run(main())

@@ -14,8 +14,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# URL = os.getenv("MILVUS_URI", "http://milvus-standalone:19530")
-URL = "http://localhost:19530"
+URL = os.getenv("MILVUS_URI", "http://milvus-standalone:19530")
+# URL = "http://localhost:19530"
 RETRIEVAL_TOP_K = 20
 RERANKER_DENSE_FACTOR = 0.4
 RERANKER_SPARSE_FACTOR = 0.6

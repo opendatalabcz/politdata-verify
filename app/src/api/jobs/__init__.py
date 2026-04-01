@@ -1,6 +1,8 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from app.src.api.models import *
 from app.src.api.auth import verify_api_key
+from app.src.api import job_store
 
 from app.src.chunking.pdf_chunker import pdf_chunker
 from app.src.milvus.milvus_interface import MilvusInterface
@@ -20,6 +22,7 @@ async def run_classify_statements_job(
 
     job_id = request.job_id
     payload = request.payload
+    job_store.set_pending(str(job_id))
     background_tasks.add_task(classify_statement_job, job_id, payload.model_dump())
 
     return {"status": "Classify statements job has been started", "job_id": str(job_id)}
@@ -36,6 +39,7 @@ async def run_add_document_job(
 
     job_id = request.job_id
     payload = request.payload
+    job_store.set_pending(str(job_id))
     background_tasks.add_task(add_document_job, job_id, payload.model_dump())
 
     return {"status": "Add document job has been started", "job_id": str(job_id)}
@@ -49,6 +53,19 @@ async def verify_political_statements(request: JobRequest, background_tasks: Bac
 
     job_id = request.job_id
     payload = request.payload
+    job_store.set_pending(str(job_id))
     background_tasks.add_task(verify_political_statements_job, job_id, payload)
 
     return {"status": "Verify political statements job has been started", "job_id": str(job_id)}
+
+
+@router.get("/result/{job_id}")
+async def get_job_result(job_id: str):
+    """
+    Poll the result of a background job by its ID.
+    Returns status PENDING | COMPLETED | FAILED, and result when completed.
+    """
+    entry = job_store.get_job(job_id)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return JSONResponse(content=entry)

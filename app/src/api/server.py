@@ -1,7 +1,11 @@
 import logging
 import uuid
 
+from dotenv import load_dotenv
+load_dotenv()  # must run before any module reads os.getenv()
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.src.api.jobs import router
 from fastapi.responses import JSONResponse
@@ -11,6 +15,13 @@ from app.src.core.logging_config import setup_logging
 setup_logging()
 logger = logging.getLogger(__name__)
 app = FastAPI(title="Political RAG API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(router, prefix="/api/v1/jobs", tags=["jobs"])
 

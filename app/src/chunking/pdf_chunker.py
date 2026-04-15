@@ -14,7 +14,7 @@ from app.src.milvus.milvus_interface import MilvusInterface
 
 tokenizer = tiktoken.get_encoding("cl100k_base")  # Jina/OpenAI compatible
 
-def chunk_heading_aware(blocks, max_tokens=400, overlap_tokens=40) -> List[dict]:
+def chunk_heading_aware(blocks, max_tokens=400, overlap_tokens=80) -> List[dict]:
     """
     Chunks text based on pre-grouped blocks from utils.py.
     Each block in 'blocks' is considered a semantic unit (Heading + Body).

@@ -6,6 +6,7 @@ import tempfile
 import os
 import fitz  # PyMuPDF
 import numpy as np
+import tiktoken
 
 from pydantic import HttpUrl
 PAGE_WIDTH_THRESHOLD = 800
@@ -148,27 +149,64 @@ def group_blocks(spans):
         blocks.append(current_block)
     return blocks
 
+def get_stats(path):
+    doc = fitz.open(path)
+    tokenizer = tiktoken.get_encoding("cl100k_base")  # GPT-4o encoding
+
+    total_chars = 0
+    total_tokens = 0
+    num_pages = len(doc)
+
+    for page in doc:
+        text = page.get_text()
+        total_chars += len(text)
+        total_tokens += len(tokenizer.encode(text))
+
+    return {
+        "pages": num_pages,
+        "characters": total_chars,
+        "tokens": total_tokens,
+    }
+
 if __name__ == "__main__":
     import asyncio
 
     async def main():
-        url_spd = "https://spd.cz/wp-content/uploads/2025/09/Program-SPD-pro-volby-do-Poslanecke-snemovny-2025.pdf"
-        url_ano = "https://www.anobudelip.cz/file/edee/ke-stazeni/volebni-program-2025.pdf"
-        url_auto = "https://36beec02.delivery.rocketcdn.me/wp-content/uploads/Volebni_program-2025_MOTORISTE-SOBE.pdf"
-        url = "https://www.starostove.cz/files/dobry-program-starostove.pdf"  # Replace with a valid PDF URL
-        tmp_path = await download_pdf_to_tmp(HttpUrl(url))
+        urls = {
+            "SPD": "https://spd.cz/wp-content/uploads/2025/09/Program-SPD-pro-volby-do-Poslanecke-snemovny-2025.pdf",
+            "ANO": "https://www.anobudelip.cz/file/edee/ke-stazeni/volebni-program-2025.pdf",
+            "Auto": "https://36beec02.delivery.rocketcdn.me/wp-content/uploads/Volebni_program-2025_MOTORISTE-SOBE.pdf",
+            "STAN": "https://www.starostove.cz/files/dobry-program-starostove.pdf",
+            "Pirati": "https://majak.pirati.cz/documents/506/PROGRAM_PIRATU_2025.pdf",
+            "Spolu": "https://spolu25.cz/pdf/SPOLU-program-2025.pdf"
+        }
+        tmp_path = await download_pdf_to_tmp(HttpUrl(urls["SPD"]))
+        data = get_stats(tmp_path)
+        print(data)
 
-        spans = extract_spans_with_sizes(tmp_path)
-        spans = detect_headings(spans)
-        for span in spans:
-            if span["is_heading"]:
-                print(f"Heading (size {span['size']}): {span['text']}")
-            else:
-                print(f"Text (size {span['size']}): {span['text']}")
-        blocks = group_blocks(spans)
-        for block in blocks:
-            print(f"Block (pages {block['pages']}): {block['text']}")
+        from pypdf import PdfReader
+        import io
+        import requests
 
+        for party, url in urls.items():
+            response = requests.get(url)
+            with io.BytesIO(response.content) as f:
+                reader = PdfReader(f)
+                meta = reader.metadata
+                print(f"\n--- {party} ---")
+                print("Vytvořeno:", meta.creation_date)
+                print("Upraveno:", meta.modification_date)
+        # spans = extract_spans_with_sizes(tmp_path)
+        # spans = detect_headings(spans)
+        # for span in spans:
+        #     if span["is_heading"]:
+        #         print(f"Heading (size {span['size']}): {span['text']}")
+        #     else:
+        #         print(f"Text (size {span['size']}): {span['text']}")
+        # blocks = group_blocks(spans)
+        # for block in blocks:
+        #     print(f"Block (pages {block['pages']}): {block['text']}")
+        #
 
         # spans = extract_spans_with_sizes(tmp_path)
         # spans = detect_headings(spans)

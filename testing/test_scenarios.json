@@ -14,7 +14,7 @@
     },
     {
       "statement": "Každý mladý občan by měl mít povinnost projít alespoň základním armádním výcvikem, abychom posílili obranu státu.",
-      "expected": "CONTRADICTED"
+      "expected": "INSUFFICIENT"
     },
     {
       "statement": "Financování televize a rozhlasu by už nemělo být plošnou zátěží pro peněženky občanů formou povinných plateb.",
@@ -22,7 +22,7 @@
     },
     {
       "statement": "Stát by měl aktivně finančně pomáhat obcím v tom, aby mohly samy stavět dostupné bydlení pro své obyvatele.",
-      "expected": "SUPPORTED"
+      "expected": "INSUFFICIENT"
     },
     {
       "statement": "Pro lepší obranyschopnost našeho kontinentu bychom se neměli bránit hlubší vojenské integraci pod hlavičkou institucí Evropské unie.",

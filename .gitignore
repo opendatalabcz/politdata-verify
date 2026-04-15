@@ -1,4 +1,7 @@
 /.env
+fe/.env.local
+fe/node_modules/
+fe/dist/
 venv/
 playground/
 volumes/

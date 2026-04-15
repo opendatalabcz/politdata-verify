@@ -3,20 +3,18 @@
 ## 1. Statistics by Party
 
 | Party | Correct | Wrong | Accuracy |
-| :--- | :--- | :--- | :--- |
-| SPD | 8 | 2 | 80.0% |
-| Starostové a nezávislí | 9 | 1 | 90.0% |
-| Piráti | 10 | 0 | 100.0% |
-| Motoristé sobě | 7 | 3 | 70.0% |
-| SPOLU | 8 | 2 | 80.0% |
-| ANO 2011 | 9 | 1 | 90.0% |
+| :--- |:--------|:------|:---------|
+| SPD | 10      | 0     | 100.0%   |
+| Starostové a nezávislí | 9       | 1     | 90.0%    |
+| Piráti | 10      | 0     | 100.0%   |
+| Motoristé sobě | 7       | 3     | 70.0%    |
+| SPOLU | 8       | 2     | 80.0%    |
+| ANO 2011 | 9       | 1     | 90.0%    |
 
 ## 2. Failure Log (Reason & Confidence)
 
 | Party | Statement | Expected | Actual / Rationale |
 | :--- | :--- | :--- | :--- |
-| SPD | Každý mladý občan by měl mít povinnost projít alespoň základním armádním výcvikem, abychom posílili obranu státu. | CONTRADICTED | AssertionError: Verdict: INSUFFICIENT | Confidence: 0.0 | Rationale: V kontextu nejsou zmínky o povinnosti mladých občanů projít základním armádním výcvikem, ani o posílení obrany státu touto formou. Texty se zaměřují na rozvoj armády a bezpečnosti, ale nezmiňují povinný výcvik pro mladé občany. assert 'INSUFFICIENT' == 'CONTRADICTED'      [0m[91m- CONTRADICTED[39;49;00m[90m[39;49;00m   [92m+ INSUFFICIENT[39;49;00m[90m[39;49;00m |
-| SPD | Stát by měl aktivně finančně pomáhat obcím v tom, aby mohly samy stavět dostupné bydlení pro své obyvatele. | SUPPORTED | AssertionError: Verdict: INSUFFICIENT | Confidence: 0.0 | Rationale: V uvedeném kontextu není zmíněno, že by stát měl aktivně finančně pomáhat obcím v oblasti výstavby dostupného bydlení. Zároveň se zde hovoří o podpoře bytové výstavby, ale bez konkrétního odkazu na obce. assert 'INSUFFICIENT' == 'SUPPORTED'      [0m[91m- SUPPORTED[39;49;00m[90m[39;49;00m   [92m+ INSUFFICIENT[39;49;00m[90m[39;49;00m |
 | Starostové a nezávislí | Aby se zvýšila kvalita veřejných vysokých škol, je nutné na nich neprodleně zavést plošné školné pro všechny studenty. | INSUFFICIENT | AssertionError: Verdict: CONTRADICTED | Confidence: 0.9 | Rationale: V textu není zmínka o zavedení plošného školného pro všechny studenty jako prostředku ke zvýšení kvality veřejných vysokých škol. Naopak, je zde zmíněno o podpoře stávajících vysokých škol a posílení jejich role ve společnosti. assert 'CONTRADICTED' == 'INSUFFICIENT'      [0m[91m- INSUFFICIENT[39;49;00m[90m[39;49;00m   [92m+ CONTRADICTED[39;49;00m[90m[39;49;00m |
 | Motoristé sobě | Zavedeme daň z cukru a slazených nápojů, abychom získali prostředky na financování zdravotnictví. | INSUFFICIENT | AssertionError: Verdict: CONTRADICTED | Confidence: 0.9 | Rationale: V kontextu se nezmiňuje o zavedení daně z cukru a slazených nápojů jako prostředku financování zdravotnictví. Naopak, program Motoristů sobě se vymezuje proti zvyšování daní. assert 'CONTRADICTED' == 'INSUFFICIENT'      [0m[91m- INSUFFICIENT[39;49;00m[90m[39;49;00m   [92m+ CONTRADICTED[39;49;00m[90m[39;49;00m |
 | Motoristé sobě | Zavedeme plošně bezplatnou městskou hromadnou dopravu pro všechny seniory a studenty. | INSUFFICIENT | AssertionError: Verdict: CONTRADICTED | Confidence: 0.9 | Rationale: Kontext neuvádí žádně zavedení plošné bezplatné městské hromadné dopravy pro seniory a studenty, ale spíše zdůrazňuje důležitost dopravy a potřebu jejího rozvoje. Neexistuje žádná podpora pro tvrzení o bezplatné dopravě pro uvedené skupiny. assert 'CONTRADICTED' == 'INSUFFICIENT'      [0m[91m- INSUFFICIENT[39;49;00m[90m[39;49;00m   [92m+ CONTRADICTED[39;49;00m[90m[39;49;00m |

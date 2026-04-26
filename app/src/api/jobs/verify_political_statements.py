@@ -18,7 +18,8 @@ async def verify_political_statements_job(job_id: uuid.UUID, payload: VerifyStat
             text=payload.text,
             speakers_list=payload.speaker_list,
             collection_name=payload.collection_name,
-            year=payload.year
+            year=payload.year,
+            mode=payload.mode
         )
         job_store.set_completed(str(job_id), result.model_dump(mode="json"))
         logger.info(f"\033[35m[JOB_COMPLETED] Job {job_id} completed.\033[0m")

@@ -4,17 +4,19 @@ main pipeline
 import asyncio
 import logging
 import time
+from typing import Literal
 
 from app.src.clients.openai_client import Client
 from app.src.milvus.milvus_interface import MilvusInterface
-from app.src.political_statements.models import Speakers, StatsResult
+from app.src.political_statements.models import Speaker, StatsResult
 from app.src.political_statements.statement_classification import classify_statement, classify_with_context
 from app.src.political_statements.statements_extraction import extract_political_statements
 from app.src.political_statements.utils import generate_stats
 logger = logging.getLogger(__name__)
 semaphore = asyncio.Semaphore(5)
+MODES = Literal["sync", "async"]
 
-async def verify_political_statements(text: str, speakers_list: Speakers = None,
+async def verify_political_statements(text: str, mode: MODES, speakers_list: list[Speaker] | None = None,
                                           collection_name: str = "test_collection",
                                           year: int = 2025) -> StatsResult:
     """
@@ -24,33 +26,58 @@ async def verify_political_statements(text: str, speakers_list: Speakers = None,
     # 2. Classify each statement using the classify_statement function
     # 3. Return the results in a structured format
     start_time = time.perf_counter()
-    extracted_statements = await extract_political_statements(text, speakers_list)
+    extracted_statements = await extract_political_statements(text, mode, speakers_list)
     end_time = time.perf_counter()
     logger.info(f"[EXTRACTION] Extracted statements in {end_time - start_time:.2f} seconds.")
     logger.info(f"[EXTRACTION] Extracted statements for {len(extracted_statements.speakers)} speakers.")
     # For each extracted statement, classify it and store the results
     client = Client()
     interface = MilvusInterface()
-    tasks = []
-    for speaker_statements in extracted_statements.speakers:
-        if not speaker_statements.speaker.party:
-            logger.warning (f"[CLASSIFICATION] Skipping speaker {speaker_statements.speaker.name} due to missing party affiliation.")
-            continue
-        for statement in speaker_statements.statements:
-            tasks.append(classify_with_context(
-                client=client,
-                speaker=speaker_statements.speaker,
-                statement=statement.statement,
-                semaphore=semaphore,
-                collection_name=collection_name,
-                milvus_interface=interface,
-                year=year
-            ))
-    logger.info(f"[CLASSIFICATION] Starting classification of {len(tasks)} statements.")
-    start_time = time.perf_counter()
-    classifications = await asyncio.gather(*tasks)
-    end_time = time.perf_counter()
-    logger.info(f"[CLASSIFICATION] Completed classification in {end_time - start_time:.2f} seconds.")
+
+    if mode == "sync":
+        classifications = []
+        all_statements = sum([len(speaker_statements.statements) for speaker_statements in extracted_statements.speakers])
+        logger.info(f"[CLASSIFICATION] Starting classification of {all_statements} statements.")
+        start_time = time.perf_counter()
+        for speaker_statements in extracted_statements.speakers:
+            if not speaker_statements.speaker.party:
+                logger.warning (f"[CLASSIFICATION] Skipping speaker {speaker_statements.speaker.name} due to missing party affiliation.")
+                continue
+            for statement in speaker_statements.statements:
+                classification = await classify_with_context(
+                    client=client,
+                    speaker=speaker_statements.speaker,
+                    statement=statement.statement,
+                    semaphore=semaphore,
+                    collection_name=collection_name,
+                    milvus_interface=interface,
+                    year=year
+                )
+                classifications.append(classification)
+        end_time = time.perf_counter()
+        logger.info(f"[CLASSIFICATION] Completed classification in {end_time - start_time:.2f} seconds.")
+
+    else:
+        tasks = []
+        for speaker_statements in extracted_statements.speakers:
+            if not speaker_statements.speaker.party:
+                logger.warning (f"[CLASSIFICATION] Skipping speaker {speaker_statements.speaker.name} due to missing party affiliation.")
+                continue
+            for statement in speaker_statements.statements:
+                tasks.append(classify_with_context(
+                    client=client,
+                    speaker=speaker_statements.speaker,
+                    statement=statement.statement,
+                    semaphore=semaphore,
+                    collection_name=collection_name,
+                    milvus_interface=interface,
+                    year=year
+                ))
+        logger.info(f"[CLASSIFICATION] Starting classification of {len(tasks)} statements.")
+        start_time = time.perf_counter()
+        classifications = await asyncio.gather(*tasks)
+        end_time = time.perf_counter()
+        logger.info(f"[CLASSIFICATION] Completed classification in {end_time - start_time:.2f} seconds.")
     stats = generate_stats(classifications, extracted_statements)
     stats.pretty_print()
     return stats

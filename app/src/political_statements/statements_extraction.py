@@ -2,13 +2,17 @@
 Module for extracting and analyzing political statements from text data.
 """
 import asyncio
+import logging
 import time
+from typing import Literal
 
 from app.src.clients.openai_client import Client
-from app.src.political_statements.models import Speakers, SpeakerStatements, ExtractionResult
+from app.src.political_statements.models import Speakers, Speaker, SpeakerStatements, ExtractionResult
 from app.src.political_statements.utils import resolve_party
 
 MODEL = "gpt-4o"
+MODES = Literal["sync", "async"]
+logger = logging.getLogger(__name__)
 
 SPEAKER_PROMPT = """
 Read the entire text and identify all speakers who make political statements.
@@ -69,17 +73,24 @@ async def extract_statements_for_speaker(text: str, speaker_name: str) -> Speake
     )
 
 
-async def extract_political_statements(text: str, speakers_list: Speakers = None) -> ExtractionResult:
+async def extract_political_statements(text: str, mode: MODES, speakers_list: list[Speaker] | None = None) -> ExtractionResult:
     """Extract political statements from the given text."""
-    start = time.time()
+    start = time.perf_counter()
     speakers = await find_speakers(text)
-    print(f"find_speakers: {time.time() - start:.2f}s")
+    logger.info(f"find_speakers: {time.perf_counter() - start:.2f}s")
 
-    tasks = [extract_statements_for_speaker(text, speaker.name) for speaker in speakers.speakers]
-    start = time.time()
-    results = await asyncio.gather(*tasks)
-    print(f"extract statements: {time.time() - start:.2f}s")
+    logger.info(f"[STATEMENTS_EXTRACTION] Starting statements extraction for {len(speakers.speakers)} speakers in {mode} mode.")
+    extraction_start = time.perf_counter()
+    if mode == "sync":
+        results = []
+        for speaker in speakers.speakers:
+            result = await extract_statements_for_speaker(text, speaker.name)
+            results.append(result)
+    else:
+        tasks = [extract_statements_for_speaker(text, speaker.name) for speaker in speakers.speakers]
+        results = await asyncio.gather(*tasks)
 
+    logger.info(f"[STATEMENTS_EXTRACTION] Finished statements extraction in: {time.perf_counter() - extraction_start:.2f}s")
     speaker_results = []
     for speaker, stmt_result in zip(speakers.speakers, results):
         party, resolution = resolve_party(
@@ -109,7 +120,8 @@ Místopředseda PSP Patrik Nacher: Děkuji, paní předsedkyně. V této chvíli
         Ministr práce a sociálních věcí ČR Aleš Juchelka: Samozřejmě, že tady tato vládní koalice, která sedí za mnou, myslí na mladé rodiny, myslí na bydlení, myslí na podporu a bude v rámci prorodinného balíčku naopak dělat něco jako je DSSP 2 i pro rodinný přídavek na dítě, například i na věcný systém různých podpor pro ty sociálně slabé. Opravdu jsme vláda, která pracuje pro občany České republiky, včetně mladých rodin i včetně zranitelných skupin i včetně ohrožených dětí, a máme to v našem programovém prohlášení vlády, které je skvělé. Děkuji.
         """
         start = time.perf_counter()
-        result = await extract_political_statements(text)
+        mode = "sync"
+        result = await extract_political_statements(text, mode)
         end = time.perf_counter()
         print(result.model_dump_json(indent=2, ensure_ascii=False))
         print(f"Extraction took {end - start:.2f} seconds")
@@ -118,8 +130,5 @@ Místopředseda PSP Patrik Nacher: Děkuji, paní předsedkyně. V této chvíli
 
         print(f"Number of speakers: {num_speakers}")
         print(f"Total statements: {total_statements}")
-        assert(num_speakers == 2, "Expected 2 speakers to be extracted.")
-        assert(13>= total_statements >= 11, "Expected between 11 and 13 statements to be extracted based on the provided text.")
-
     asyncio.run(main())
 

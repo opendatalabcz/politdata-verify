@@ -85,8 +85,7 @@ async def classify_with_context(
         )
 
     return ClassifiedStatementWithContext(
-        speaker=speaker.name,
-        party=speaker.party,
+        speaker=speaker,
         statement=statement,
         verdict=verdict.verdict,
         rationale=verdict.rationale,

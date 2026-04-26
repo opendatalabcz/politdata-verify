@@ -15,6 +15,7 @@ class VerifyStatementsPayload(BaseModel):
     speaker_list: List[Speaker] | None = None
     collection_name: str = "test_collection"
     year: int = 2025
+    mode: Literal["sync", "async"] = "async"
 
 
 class Statement(BaseModel):

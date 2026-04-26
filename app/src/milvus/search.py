@@ -11,6 +11,17 @@ MODEL = "gpt-4o-mini"
 CONTEXT_MAX_LEN = 70000
 TOP_K = 40
 
+PARTY_ALIAS_MAP: Dict[str, str] = {
+    "ODS": "SPOLU",
+    "TOP 09": "SPOLU",
+    "KDU-ČSL": "SPOLU",
+}
+
+def normalize_party(party: str | None) -> str | None:
+    if party is None:
+        return None
+    return PARTY_ALIAS_MAP.get(party.strip(), party)
+
 class Queries(BaseModel):
     queries: List[str]
 
@@ -57,7 +68,7 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
 
     interface = kwargs.get("interface") or MilvusInterface()
     year = kwargs.get("year", None)
-    party = kwargs.get("party", None)
+    party = normalize_party(kwargs.get("party", None))
 
     all_chunks = []
     logger.info(f"[MILVUS SEARCH] Generating multiple queries for: {query}")

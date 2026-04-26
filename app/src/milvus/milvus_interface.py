@@ -153,6 +153,29 @@ class MilvusInterface:
 
 
 
+    async def list_collections_with_stats(self) -> list[dict]:
+        collections = self.client.list_collections()
+        result = []
+        for col in collections:
+            try:
+                await self.async_client.load_collection(col)
+                rows = self.client.query(collection_name=col, filter="", output_fields=["party"], limit=16384)
+                parties = list({r["party"] for r in rows if r.get("party")})
+                party_stats = []
+                for party in sorted(parties):
+                    count_rows = self.client.query(
+                        collection_name=col,
+                        filter=f"party == '{party}'",
+                        output_fields=["count(*)"],
+                    )
+                    party_stats.append({"party": party, "chunk_count": count_rows[0]["count(*)"]})
+                await self.async_client.release_collection(col)
+                result.append({"collection_name": col, "parties": party_stats})
+            except Exception as e:
+                logger.warning(f"[LIST_COLLECTIONS] Error processing {col}: {e}")
+                result.append({"collection_name": col, "parties": []})
+        return result
+
     async def drop_collection(self, collection_name: str) -> None:
         """
         delete milvus collection

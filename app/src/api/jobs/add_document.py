@@ -24,7 +24,7 @@ async def add_document_job(job_id: uuid.UUID, payload: dict):
             await interface.insert_chunks(collection_name=document.collection_name, chunks=chunks)
             logger.info(f"[ADD_DOCUMENT] Document {document.name} added to collection {document.collection_name}.")
         job_store.set_completed(str(job_id), {"message": f"{len(documents)} document(s) added successfully."})
-        logger.info(f"[ADD_DOCUMENT] Job {job_id} completed.")
+        logger.info(f"\033[35m[JOB_COMPLETED] Job {job_id} completed.\033[0m")
     except Exception as exc:
         logger.exception(f"[ADD_DOCUMENT_FAILED] Job {job_id}: {exc}")
         job_store.set_failed(str(job_id), str(exc))

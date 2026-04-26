@@ -7,17 +7,21 @@ from typing import List
 import pandas as pd
 import requests
 
-from app.src.political_statements.models import Speakers, Speaker, ClassifiedStatementWithContext, ExtractionResult, \
+from typing import List
+from app.src.political_statements.models import Speaker, ClassifiedStatementWithContext, ExtractionResult, \
     SpeakerStats, StatsResult
 
 URL = "https://www.psp.cz/eknih/cdrom/opendata/poslanci.zip"
 
 POLITICAL_PARTIES_MAPPING = {
     "ANO2011": "ANO 2011",
-    "KDU-ČSL": "SPOLU",
-    "ODS": "SPOLU",
+    "KDU-ČSL": "KDU-ČSL",
+    "Piráti": "Piráti",
+    "SPD": "SPD",
+    "ODS": "ODS",
     "STAN": "Starostové a nezávislí",
-    "TOP09": "SPOLU",
+    "TOP09": "TOP 09",
+    "MS": "Motoristé sobě"
 }
 
 def generate_stats(classified_statements: List[ClassifiedStatementWithContext], extracted_statements: ExtractionResult)\
@@ -25,26 +29,21 @@ def generate_stats(classified_statements: List[ClassifiedStatementWithContext], 
     all_statements = len([statement for speaker in extracted_statements.speakers for statement in speaker.statements])
     all_speakers = len(extracted_statements.speakers)
 
-    speakers = set()
-    for speaker_statements in extracted_statements.speakers:
-        speaker = speaker_statements.speaker
-        speakers.add(speaker.name)
+    speaker_objects = {
+        f"{ss.speaker.name} {ss.speaker.surname}": ss.speaker
+        for ss in extracted_statements.speakers
+    }
 
     speakers_stats = []
-    for speaker in speakers:
-        speaker_statements = [s for s in classified_statements if s.speaker == speaker]
-        total_statements = len(speaker_statements)
-        supported = [s for s in speaker_statements if s.verdict == "SUPPORTED"]
-        contradicted = [s for s in speaker_statements if s.verdict == "CONTRADICTED"]
-        insufficient = [s for s in speaker_statements if s.verdict == "INSUFFICIENT"]
-        party = next((s.party for s in classified_statements if s.speaker == speaker), "Unknown")
+    for full_name, speaker_obj in speaker_objects.items():
+        speaker_stmts = [s for s in classified_statements
+                         if f"{s.speaker.name} {s.speaker.surname}" == full_name]
         speakers_stats.append(SpeakerStats(
-            speaker=speaker,
-            party=party,
-            total_statements=total_statements,
-            supported=supported,
-            contradicted=contradicted,
-            insufficient=insufficient
+            speaker=speaker_obj,
+            total_statements=len(speaker_stmts),
+            supported=[s for s in speaker_stmts if s.verdict == "SUPPORTED"],
+            contradicted=[s for s in speaker_stmts if s.verdict == "CONTRADICTED"],
+            insufficient=[s for s in speaker_stmts if s.verdict == "INSUFFICIENT"],
         ))
     return StatsResult(total_speakers=all_speakers, total_statements=all_statements, speakers_stats=speakers_stats)
 
@@ -149,6 +148,7 @@ def get_active_politicians():
 
             debug_data.append({
                 "politician_name": p_name,
+                "id_osoba": p_id,
                 "from": od_o,
                 "to": "ONGOING",
                 "org_ID": org_info["parent_id"],
@@ -166,30 +166,40 @@ def extract_party_from_club(club_name: str) -> str:
 
 def resolve_party(
     speaker: Speaker,
-    provided_speakers: Speakers | None,
+    provided_speakers: List[Speaker] | None,
 ) -> tuple[str | None, str]:
-    if provided_speakers and speaker.name in provided_speakers:
-        speaker.party = provided_speakers[speaker.name]
-        return provided_speakers[speaker.name], "provided"
-
-    if speaker.party:
-        return speaker.party, "extracted_from_text"
+    print(f"{speaker.name} {speaker.surname} list: {provided_speakers}")
+    if provided_speakers:
+        match = next(
+            (s for s in provided_speakers if s.name == speaker.name and s.surname == speaker.surname),
+            None
+        )
+        if match and match.party:
+            speaker.party = match.party
+            return match.party, "provided"
 
     df = get_active_politicians()
-    full_name = f"{speaker.surname} {speaker.name}"
+    full_name = f"{speaker.name} {speaker.surname}"
     match = df[(df['politician_name'] == full_name) & (df['org_type'] == "174") & (df['org_ID'] == "1")]
     print(match)
 
     if not match.empty:
-        party = match.iloc[-1]['org_name']
-        if party in POLITICAL_PARTIES_MAPPING:
-            party = POLITICAL_PARTIES_MAPPING[party]
-        speaker.party = party
-        return party, "psp_lookup"
+        id_osoba = match.iloc[-1]['id_osoba']
+        speaker.photo_url = f"https://www.psp.cz/eknih/cdrom/2025ps/eknih/2025ps/poslanci/i{id_osoba}.jpg"
+
+        if not speaker.party:
+            party = match.iloc[-1]['org_name']
+            if party in POLITICAL_PARTIES_MAPPING:
+                party = POLITICAL_PARTIES_MAPPING[party]
+            speaker.party = party
+            return party, "psp_lookup"
+
+    if speaker.party:
+        return speaker.party, "extracted_from_text"
 
     return None, "unresolvable"
 
 if __name__ == "__main__":
     # print(get_poslanec_lookup())
-    speaker = Speaker(name="Jiří", surname="Pospíšil", party=None)
+    speaker = Speaker(name="Petr", surname="Macinka", party=None)
     print(resolve_party(speaker, None))

@@ -12,6 +12,7 @@ class Speaker(BaseModel):
     name: str
     surname: str
     party: str | None = None
+    photo_url: str | None = None
 
 class Speakers(BaseModel):
     speakers: List[Speaker]
@@ -56,13 +57,11 @@ class ClassifiedStatementWithContext(ClassifiedStatement):
     """
     Model representing a classified political statement with additional context.
     """
-    speaker: str
-    party: str
+    speaker: Speaker
     statement: str
 
 class SpeakerStats(BaseModel):
-    speaker: str
-    party: str
+    speaker: Speaker
     total_statements: int
     supported: List[ClassifiedStatementWithContext]
     contradicted: List[ClassifiedStatementWithContext]
@@ -77,7 +76,7 @@ class StatsResult(BaseModel):
         logger.info(f"Total Speakers: {self.total_speakers}")
         logger.info(f"Total Statements: {self.total_statements}")
         for speaker_stat in self.speakers_stats:
-            logger.info(f"\nSpeaker: {speaker_stat.speaker} ({speaker_stat.party})")
+            logger.info(f"\nSpeaker: {speaker_stat.speaker.name} {speaker_stat.speaker.surname} ({speaker_stat.speaker.party})")
             logger.info(f"  Total Statements: {speaker_stat.total_statements}")
             logger.info(f"  Supported: {len(speaker_stat.supported)}")
             for s in speaker_stat.supported:

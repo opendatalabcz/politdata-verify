@@ -89,6 +89,24 @@ export default function AboutModal({ onClose }: Props) {
             </div>
           </div>
 
+          <div className="about-confidence">
+            <h4>Jak číst hodnotu jistoty (confidence)</h4>
+            <p>Každý verdikt je doprovázen hodnotou jistoty — jak přesvědčený byl model při klasifikaci. Čím vyšší číslo, tím spolehlivější výsledek.</p>
+            <div className="conf-example-row">
+              <div className="conf-example high">
+                <span className="conf-num">71–100 %</span>
+                <span>Model si verdiktem byl jistý</span>
+              </div>
+              <div className="conf-example low">
+                <span className="conf-num">0–70 %</span>
+                <span>Nízká jistota — doporučujeme manuální přezkum</span>
+              </div>
+            </div>
+            <p className="about-note">
+              Výroky s jistotou 70 % a méně jsou zvýrazněny žlutým okrajem. Může jít o hraniční případ nebo výrok, jehož téma program zmiňuje jen okrajově.
+            </p>
+          </div>
+
           <div className="about-section">
             <h3>Použité technologie</h3>
             <div className="tech-list">

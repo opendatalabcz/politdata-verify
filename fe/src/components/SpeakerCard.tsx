@@ -17,7 +17,7 @@ function initials(name: string, surname: string) {
 }
 
 export default function SpeakerCard({ speaker, colorIndex, filterVerdict }: Props) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
 
   const color = AVATAR_COLORS[colorIndex % AVATAR_COLORS.length]
   const total = speaker.total_statements

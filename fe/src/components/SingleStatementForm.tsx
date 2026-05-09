@@ -8,12 +8,23 @@ interface Props {
 
 export default function SingleStatementForm({ onSubmit, error }: Props) {
   const [query, setQuery] = useState('')
-  const [collection, setCollection] = useState('test_collection')
+  const [collections, setCollections] = useState<string[]>([])
+  const [collection, setCollection] = useState('')
   const [parties, setParties] = useState<string[]>([])
   const [party, setParty] = useState('')
   const [year, setYear] = useState(2025)
   const [submitting, setSubmitting] = useState(false)
   const [loadingParties, setLoadingParties] = useState(false)
+
+  useEffect(() => {
+    fetchCollections()
+      .then(cols => {
+        const names = cols.map(c => c.collection_name)
+        setCollections(names)
+        if (names.length > 0) setCollection(names[0])
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!collection.trim()) return
@@ -47,19 +58,29 @@ export default function SingleStatementForm({ onSubmit, error }: Props) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           rows={4}
+          maxLength={500}
           placeholder="Vložte konkrétní politický výrok, který chcete ověřit vůči stranickému programu…"
         />
+        <div className={`char-counter${query.length >= 500 ? ' char-counter-limit' : query.length > 400 ? ' char-counter-warn' : ''}`}>
+          {query.length} / 500 znaků
+        </div>
       </div>
 
       <div className="form-row" style={{ marginTop: '16px' }}>
         <div className="form-group">
-          <label htmlFor="s-collection">Kolekce (Milvus)</label>
-          <input
+          <label htmlFor="s-collection">Kolekce</label>
+          <select
             id="s-collection"
-            type="text"
             value={collection}
             onChange={e => setCollection(e.target.value)}
-          />
+            className="select-input"
+            disabled={collections.length === 0}
+          >
+            {collections.length === 0
+              ? <option>Načítám…</option>
+              : collections.map(c => <option key={c} value={c}>{c}</option>)
+            }
+          </select>
         </div>
         <div className="form-group">
           <label htmlFor="s-party">Strana</label>

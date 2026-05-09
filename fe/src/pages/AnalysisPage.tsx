@@ -7,6 +7,7 @@ import LoadingState from '../components/LoadingState'
 import ResultsView from '../components/ResultsView'
 import SingleStatementResult from '../components/SingleStatementResult'
 import PoliticianModal from '../components/PoliticianModal'
+import RateLimitModal from '../components/RateLimitModal'
 
 type Mode   = 'conversation' | 'statement'
 type Phase  = 'input' | 'loading' | 'results'
@@ -17,9 +18,10 @@ export default function AnalysisPage() {
   const [mode, setMode]           = useState<Mode>('conversation')
   const [phase, setPhase]         = useState<Phase>('input')
   const [result, setResult]       = useState<Result | null>(null)
-  const [error, setError]         = useState<string | null>(null)
-  const [speakers, setSpeakers]   = useState<Speaker[]>([])
-  const [modalOpen, setModalOpen] = useState(false)
+  const [error, setError]           = useState<string | null>(null)
+  const [speakers, setSpeakers]     = useState<Speaker[]>([])
+  const [modalOpen, setModalOpen]   = useState(false)
+  const [rateLimitMsg, setRateLimit] = useState<string | null>(null)
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -49,6 +51,15 @@ export default function AnalysisPage() {
     }, 3000)
   }
 
+  function handleApiError(err: unknown) {
+    const e = err as Error & { status?: number }
+    if (e.status === 429) {
+      setRateLimit(e.message)
+    } else {
+      setError(e.message)
+    }
+  }
+
   async function handleConversationSubmit(text: string, collection: string, year: number, mode: 'sync' | 'async') {
     setError(null)
     try {
@@ -56,7 +67,7 @@ export default function AnalysisPage() {
       setPhase('loading')
       startPolling(jobId, 'stats')
     } catch (err) {
-      setError((err as Error).message)
+      handleApiError(err)
     }
   }
 
@@ -67,7 +78,7 @@ export default function AnalysisPage() {
       setPhase('loading')
       startPolling(jobId, 'statement', query)
     } catch (err) {
-      setError((err as Error).message)
+      handleApiError(err)
     }
   }
 
@@ -154,6 +165,13 @@ export default function AnalysisPage() {
           speakers={speakers}
           onConfirm={setSpeakers}
           onClose={() => setModalOpen(false)}
+        />
+      )}
+
+      {rateLimitMsg && (
+        <RateLimitModal
+          message={rateLimitMsg}
+          onClose={() => setRateLimit(null)}
         />
       )}
     </div>

@@ -91,7 +91,7 @@ export default function ResultsView({ stats, onReset }: Props) {
         <div className="results-grid">
           {filtered.map((speaker, i) => (
             <SpeakerCard
-              key={`${speaker.speaker.name}-${speaker.speaker.surname}`}
+              key={`${filter}-${speaker.speaker.name}-${speaker.speaker.surname}`}
               speaker={speaker}
               colorIndex={i}
               filterVerdict={filter === 'all' ? undefined : filter}

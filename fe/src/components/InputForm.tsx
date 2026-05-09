@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import type { Speaker } from '../types'
+import { fetchCollections } from '../api/client'
 
 interface Props {
   speakers: Speaker[]
@@ -10,10 +11,21 @@ interface Props {
 
 export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }: Props) {
   const [text, setText] = useState('')
-  const [collection, setCollection] = useState('test_collection')
+  const [collections, setCollections] = useState<string[]>([])
+  const [collection, setCollection] = useState('')
   const [year, setYear] = useState(2025)
   const [mode, setMode] = useState<'sync' | 'async'>('async')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetchCollections()
+      .then(cols => {
+        const names = cols.map(c => c.collection_name)
+        setCollections(names)
+        if (names.length > 0) setCollection(names[0])
+      })
+      .catch(() => {})
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -32,6 +44,7 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
           value={text}
           onChange={e => setText(e.target.value)}
           rows={10}
+          maxLength={5000}
           placeholder={
             'Vložte text parlamentní debaty nebo jiného politického projevu…\n\n' +
             'Příklad:\n' +
@@ -39,17 +52,26 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
             'Ministr práce Aleš Juchelka: Samozřejmě, tato vládní koalice myslí na mladé rodiny…'
           }
         />
+        <div className={`char-counter${text.length >= 5000 ? ' char-counter-limit' : text.length > 4000 ? ' char-counter-warn' : ''}`}>
+          {text.length} / 5 000 znaků
+        </div>
       </div>
 
       <div className="form-row form-row-flush">
         <div className="form-group">
           <label htmlFor="collection">Kolekce</label>
-          <input
+          <select
             id="collection"
-            type="text"
             value={collection}
             onChange={e => setCollection(e.target.value)}
-          />
+            className="select-input"
+            disabled={collections.length === 0}
+          >
+            {collections.length === 0
+              ? <option>Načítám…</option>
+              : collections.map(c => <option key={c} value={c}>{c}</option>)
+            }
+          </select>
         </div>
         <div className="form-group form-group-narrow">
           <label htmlFor="year">Rok</label>

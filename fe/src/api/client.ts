@@ -7,6 +7,25 @@ function authUrl(path: string) {
   return `${API_BASE}${path}?x-api-key=${encodeURIComponent(API_KEY)}`
 }
 
+function adminHeaders(): HeadersInit {
+  const token = sessionStorage.getItem('admin_token')
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
+export async function adminLogin(password: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  })
+  if (!res.ok) throw new Error('Nesprávné heslo.')
+  const data = await res.json() as { token: string }
+  return data.token
+}
+
 // ── Conversation verification ─────────────────────────────────────────────────
 
 export interface Speaker {
@@ -39,7 +58,9 @@ export async function startVerification(
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { detail?: string }
-    throw new Error(body.detail ?? `HTTP ${res.status}`)
+    const err = new Error(body.detail ?? `HTTP ${res.status}`) as Error & { status: number }
+    err.status = res.status
+    throw err
   }
   return jobId
 }
@@ -65,7 +86,9 @@ export async function startSingleStatement(
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { detail?: string }
-    throw new Error(body.detail ?? `HTTP ${res.status}`)
+    const err = new Error(body.detail ?? `HTTP ${res.status}`) as Error & { status: number }
+    err.status = res.status
+    throw err
   }
   return jobId
 }
@@ -82,7 +105,7 @@ export async function startAddDocument(
   const jobId = crypto.randomUUID()
   const res = await fetch(authUrl('/api/v1/jobs/add_document'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminHeaders(),
     body: JSON.stringify({
       job_id: jobId,
       payload: {
@@ -110,7 +133,7 @@ export async function fetchSpeakers(): Promise<SpeakerInfo[]> {
 
 // ── Collections ───────────────────────────────────────────────────────────────
 
-export interface PartyStats { party: string; chunk_count: number }
+export interface PartyStats { party: string; chunk_count: number; doc_names: string[]; total_chars: number }
 export interface CollectionStats { collection_name: string; parties: PartyStats[] }
 
 export async function fetchCollections(): Promise<CollectionStats[]> {
@@ -121,8 +144,17 @@ export async function fetchCollections(): Promise<CollectionStats[]> {
 }
 
 export async function deleteParty(collectionName: string, party: string): Promise<void> {
-  const res = await fetch(authUrl(`/api/v1/collections/${encodeURIComponent(collectionName)}/parties/${encodeURIComponent(party)}`), {
+  const res = await fetch(`${API_BASE}/api/v1/collections/${encodeURIComponent(collectionName)}/parties/${encodeURIComponent(party)}`, {
     method: 'DELETE',
+    headers: adminHeaders(),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+}
+
+export async function deleteCollection(collectionName: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/v1/collections/${encodeURIComponent(collectionName)}`, {
+    method: 'DELETE',
+    headers: adminHeaders(),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
 }

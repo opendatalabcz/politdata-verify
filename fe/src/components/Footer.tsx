@@ -31,6 +31,8 @@ export default function Footer() {
           </p>
           <p className="footer-contact">
             Kontakt:{' '}
+            <a href="mailto:petaherec@gmail.com">petaherec@gmail.com</a>
+            {' · '}
             <a href="mailto:herckpet@cvut.cz">herckpet@cvut.cz</a>
           </p>
         </div>

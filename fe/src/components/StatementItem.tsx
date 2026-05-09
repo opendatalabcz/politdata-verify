@@ -6,9 +6,9 @@ interface Props {
 }
 
 const VERDICT_CONFIG = {
-  SUPPORTED:    { cls: 'supported',    icon: '✅', barColor: 'var(--green)' },
-  CONTRADICTED: { cls: 'contradicted', icon: '❌', barColor: 'var(--red)'   },
-  INSUFFICIENT: { cls: 'insufficient', icon: '❓', barColor: 'var(--gray)'  },
+  SUPPORTED:    { cls: 'supported',    icon: '✅' },
+  CONTRADICTED: { cls: 'contradicted', icon: '❌' },
+  INSUFFICIENT: { cls: 'insufficient', icon: '❓' },
 } as const
 
 export default function StatementItem({ statement }: Props) {
@@ -16,8 +16,10 @@ export default function StatementItem({ statement }: Props) {
   const cfg = VERDICT_CONFIG[statement.verdict]
   const conf = Math.round(statement.confidence * 100)
 
+  const lowConf = statement.confidence <= 0.7
+
   return (
-    <div className="statement-item" onClick={() => setOpen(o => !o)}>
+    <div className={`statement-item${lowConf ? ' low-conf' : ''}`} onClick={() => setOpen(o => !o)}>
       <div className="statement-row">
         <div className={`verdict-icon ${cfg.cls}`}>{cfg.icon}</div>
         <p className="statement-text">{statement.statement}</p>
@@ -26,7 +28,7 @@ export default function StatementItem({ statement }: Props) {
           <div className="conf-bar-track">
             <div
               className="conf-bar-fill"
-              style={{ width: `${conf}%`, background: cfg.barColor }}
+              style={{ width: `${conf}%` }}
             />
           </div>
         </div>

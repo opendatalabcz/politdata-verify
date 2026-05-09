@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react'
-import { startAddDocument, pollJobResult, fetchCollections, deleteParty } from '../api/client'
+import { startAddDocument, pollJobResult, fetchCollections, deleteParty, deleteCollection } from '../api/client'
 import type { CollectionStats } from '../api/client'
 import { PARTIES } from '../data/politicians'
 
 type Phase = 'form' | 'loading' | 'success' | 'error'
 
-function CollectionsTable() {
+function CollectionsTable({ canDelete, registerRefresh }: { canDelete: boolean; registerRefresh?: (fn: () => void) => void }) {
   const [collections, setCollections] = useState<CollectionStats[] | null>(null)
   const [loading, setLoading]         = useState(false)
   const [deleting, setDeleting]       = useState<string | null>(null)
+  const [deletingCol, setDeletingCol] = useState<string | null>(null)
   const [error, setError]             = useState('')
 
   useEffect(() => { load() }, [])
+  useEffect(() => { registerRefresh?.(load) }, [])
 
   async function load() {
     setLoading(true)
@@ -22,6 +24,19 @@ function CollectionsTable() {
       setError('Nepodařilo se načíst kolekce.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDeleteCollection(collection: string) {
+    if (!confirm(`Opravdu smazat celou kolekci "${collection}"? Tato akce je nevratná.`)) return
+    setDeletingCol(collection)
+    try {
+      await deleteCollection(collection)
+      await load()
+    } catch {
+      setError('Mazání kolekce selhalo.')
+    } finally {
+      setDeletingCol(null)
     }
   }
 
@@ -42,14 +57,11 @@ function CollectionsTable() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-          {loading ? 'Načítám…' : collections ? `${collections.length} kolekcí · ${totalChunks} chunků` : ''}
-        </span>
-        <button className="btn btn-ghost" style={{ fontSize: '13px', padding: '4px 12px' }} onClick={load} disabled={loading}>
-          ↻ Obnovit
-        </button>
-      </div>
+      {collections && (
+        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
+          {loading ? 'Načítám…' : `${collections.length} kolekcí · ${totalChunks} chunků`}
+        </p>
+      )}
 
       {error && <p style={{ color: 'var(--red)', marginBottom: '12px' }}>{error}</p>}
 
@@ -61,18 +73,37 @@ function CollectionsTable() {
 
       {!loading && collections !== null && collections.length > 0 && collections.map(col => (
         <div key={col.collection_name} style={{ marginBottom: '20px' }}>
-          <p style={{ fontWeight: 600, color: 'var(--accent)', marginBottom: '8px', fontSize: '14px' }}>
-            📁 {col.collection_name}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <p style={{ fontWeight: 600, color: 'var(--accent)', fontSize: '14px', margin: 0 }}>
+              📁 {col.collection_name}
+            </p>
+            {canDelete && (
+              <button
+                className="btn-delete"
+                disabled={deletingCol === col.collection_name}
+                onClick={() => handleDeleteCollection(col.collection_name)}
+                title="Smazat celou kolekci"
+              >
+                {deletingCol === col.collection_name ? '…' : 'Smazat kolekci'}
+              </button>
+            )}
+          </div>
           {col.parties.length === 0 ? (
             <p className="section-hint" style={{ paddingLeft: '16px' }}>Žádné záznamy.</p>
           ) : (
-            <table className="db-table">
+            <table className="db-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+              <colgroup>
+                <col style={{ width: '22%' }} />
+                <col />
+                <col style={{ width: '16%' }} />
+                {canDelete && <col style={{ width: '80px' }} />}
+              </colgroup>
               <thead>
                 <tr>
                   <th>Strana</th>
-                  <th style={{ textAlign: 'right' }}>Počet Chunků</th>
-                  <th></th>
+                  <th>Dokument</th>
+                  <th style={{ textAlign: 'right' }}>Rozsah</th>
+                  {canDelete && <th></th>}
                 </tr>
               </thead>
               <tbody>
@@ -81,16 +112,23 @@ function CollectionsTable() {
                   return (
                     <tr key={p.party}>
                       <td>{p.party}</td>
-                      <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.chunk_count}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button
-                          className="btn-delete"
-                          disabled={deleting === key}
-                          onClick={() => handleDelete(col.collection_name, p.party)}
-                        >
-                          {deleting === key ? '…' : '✕'}
-                        </button>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                        {p.doc_names?.join(', ') || '—'}
                       </td>
+                      <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                        {p.total_chars ? `${p.total_chars.toLocaleString('cs-CZ')} znaků` : `${p.chunk_count} částí`}
+                      </td>
+                      {canDelete && (
+                        <td style={{ textAlign: 'right' }}>
+                          <button
+                            className="btn-delete"
+                            disabled={deleting === key}
+                            onClick={() => handleDelete(col.collection_name, p.party)}
+                          >
+                            {deleting === key ? '…' : '✕'}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   )
                 })}
@@ -103,14 +141,26 @@ function CollectionsTable() {
   )
 }
 
-export default function DocumentsPage() {
+export default function DocumentsPage({ adminUnlocked }: { adminUnlocked: boolean }) {
   const [phase, setPhase]     = useState<Phase>('form')
   const [url, setUrl]         = useState('')
   const [name, setName]       = useState('')
-  const [collection, setCol]  = useState('test_collection')
+  const [collections, setCollections] = useState<string[]>([])
+  const [collection, setCol]  = useState('')
+  const [customCol, setCustomCol] = useState('')
   const [party, setParty]     = useState('')
   const [customParty, setCustomParty] = useState('')
   const [year, setYear]       = useState(2025)
+
+  useEffect(() => {
+    fetchCollections()
+      .then(cols => {
+        const names = cols.map(c => c.collection_name)
+        setCollections(names)
+        if (names.length > 0) setCol(names[0])
+      })
+      .catch(() => {})
+  }, [])
   const [elapsed, setElapsed] = useState(0)
   const [errorMsg, setError]  = useState('')
 
@@ -134,7 +184,8 @@ export default function DocumentsPage() {
 
     try {
       const resolvedParty = party === '__custom__' ? (customParty.trim() || null) : (party || null)
-      const jobId = await startAddDocument(url, name, collection, resolvedParty, year)
+      const resolvedCol = collection === '__new__' ? customCol.trim() : collection
+      const jobId = await startAddDocument(url, name, resolvedCol, resolvedParty, year)
 
       pollRef.current = setInterval(async () => {
         try {
@@ -164,20 +215,33 @@ export default function DocumentsPage() {
     setPhase('form')
   }
 
-  const [dbOpen, setDbOpen] = useState(false)
+  const refreshRef = useRef<(() => void) | null>(null)
 
   return (
     <>
     <div className="card" style={{ marginTop: '24px' }}>
       <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>📄 Přidat dokument do Milvus</span>
-        <button className="btn btn-ghost" style={{ fontSize: '13px', padding: '4px 12px' }} onClick={() => setDbOpen(true)}>
-          🗄️ Všechny soubory
+        <span>🗄️ Obsah znalostní báze</span>
+        <button className="btn btn-ghost" style={{ fontSize: '13px', padding: '4px 12px' }} onClick={() => refreshRef.current?.()}>
+          ↻ Obnovit
         </button>
       </div>
       <div className="card-body">
+        <CollectionsTable canDelete={adminUnlocked} registerRefresh={fn => { refreshRef.current = fn }} />
+      </div>
+    </div>
 
-        {phase === 'form' && (
+    <div className="card" style={{ marginTop: '16px' }}>
+      <div className="card-header">📄 Přidat dokument do Milvus</div>
+      <div className="card-body">
+
+        {!adminUnlocked && (
+          <p className="section-hint" style={{ color: 'var(--text-muted)' }}>
+            🔒 Přidávání dokumentů vyžaduje přihlášení administrátora.
+          </p>
+        )}
+
+        {adminUnlocked && phase === 'form' && (
           <form onSubmit={handleSubmit}>
             <p className="section-hint">
               Vložte URL k PDF souboru (stranický program, výroční zpráva apod.).
@@ -210,12 +274,25 @@ export default function DocumentsPage() {
               </div>
               <div className="form-group">
                 <label htmlFor="doc-collection">Kolekce</label>
-                <input
+                <select
                   id="doc-collection"
-                  type="text"
                   value={collection}
                   onChange={e => setCol(e.target.value)}
-                />
+                  className="select-input"
+                >
+                  {collections.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="__new__">+ Nová kolekce…</option>
+                </select>
+                {collection === '__new__' && (
+                  <input
+                    type="text"
+                    value={customCol}
+                    onChange={e => setCustomCol(e.target.value)}
+                    placeholder="Název nové kolekce"
+                    style={{ marginTop: '8px' }}
+                    required
+                  />
+                )}
               </div>
               <div className="form-group form-group-narrow">
                 <label htmlFor="doc-year">Rok</label>
@@ -261,7 +338,7 @@ export default function DocumentsPage() {
           </form>
         )}
 
-        {phase === 'loading' && (
+        {adminUnlocked && phase === 'loading' && (
           <div className="doc-status">
             <div className="spinner" />
             <p className="loading-title">Nahrávám dokument…</p>
@@ -273,7 +350,7 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        {phase === 'success' && (
+        {adminUnlocked && phase === 'success' && (
           <div className="doc-status">
             <div className="success-icon">✅</div>
             <p className="loading-title" style={{ color: 'var(--green)' }}>Dokument úspěšně nahrán!</p>
@@ -288,7 +365,7 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        {phase === 'error' && (
+        {adminUnlocked && phase === 'error' && (
           <div className="doc-status">
             <div className="error-icon">❌</div>
             <p className="loading-title" style={{ color: 'var(--red)' }}>Nahrávání selhalo</p>
@@ -303,20 +380,6 @@ export default function DocumentsPage() {
 
       </div>
     </div>
-
-    {dbOpen && (
-      <div className="modal-overlay" onClick={() => setDbOpen(false)}>
-        <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
-          <div className="modal-header">
-            <span>🗄️ Obsah databáze</span>
-            <button className="modal-close" onClick={() => setDbOpen(false)}>✕</button>
-          </div>
-          <div className="modal-body">
-            <CollectionsTable />
-          </div>
-        </div>
-      </div>
-    )}
     </>
   )
 }

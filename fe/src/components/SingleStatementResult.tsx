@@ -45,6 +45,13 @@ export default function SingleStatementResult({ statement, query, onReset }: Pro
         <p className="result-query">"{query}"</p>
       </div>
 
+      {/* Low confidence warning */}
+      {statement.confidence <= 0.7 && (
+        <div className="low-conf-banner">
+          ⚠️ Model si tímto verdiktem nebyl příliš jistý — doporučujeme manuální přezkum.
+        </div>
+      )}
+
       {/* Rationale */}
       {statement.rationale && (
         <div className="result-section">

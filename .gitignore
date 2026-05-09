@@ -6,3 +6,8 @@ venv/
 playground/
 volumes/
 audio/
+
+# Generated test reports
+test_report*.md
+project_structure.drawio.pdf
+data/test_audio.mp3

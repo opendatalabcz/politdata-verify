@@ -168,31 +168,33 @@ def resolve_party(
     speaker: Speaker,
     provided_speakers: List[Speaker] | None,
 ) -> tuple[str | None, str]:
-    print(f"{speaker.name} {speaker.surname} list: {provided_speakers}")
+    provided_party = None
     if provided_speakers:
-        match = next(
+        prov_match = next(
             (s for s in provided_speakers if s.name == speaker.name and s.surname == speaker.surname),
             None
         )
-        if match and match.party:
-            speaker.party = match.party
-            return match.party, "provided"
+        if prov_match and prov_match.party:
+            provided_party = prov_match.party
 
     df = get_active_politicians()
-    full_name = f"{speaker.name} {speaker.surname}"
-    match = df[(df['politician_name'] == full_name) & (df['org_type'] == "174") & (df['org_ID'] == "1")]
-    print(match)
+    full_name = f"{speaker.surname} {speaker.name}"
+    psp_match = df[(df['politician_name'] == full_name) & (df['org_type'] == "174") & (df['org_ID'] == "1")]
 
-    if not match.empty:
-        id_osoba = match.iloc[-1]['id_osoba']
+    if not psp_match.empty:
+        id_osoba = psp_match.iloc[-1]['id_osoba']
         speaker.photo_url = f"https://www.psp.cz/eknih/cdrom/2025ps/eknih/2025ps/poslanci/i{id_osoba}.jpg"
 
-        if not speaker.party:
-            party = match.iloc[-1]['org_name']
-            if party in POLITICAL_PARTIES_MAPPING:
-                party = POLITICAL_PARTIES_MAPPING[party]
-            speaker.party = party
-            return party, "psp_lookup"
+    if provided_party:
+        speaker.party = provided_party
+        return provided_party, "provided"
+
+    if not psp_match.empty:
+        party = psp_match.iloc[-1]['org_name']
+        if party in POLITICAL_PARTIES_MAPPING:
+            party = POLITICAL_PARTIES_MAPPING[party]
+        speaker.party = party
+        return party, "psp_lookup"
 
     if speaker.party:
         return speaker.party, "extracted_from_text"

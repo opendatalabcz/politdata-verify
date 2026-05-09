@@ -17,11 +17,24 @@ MARGIN_BOTTOM = 0.05
 MARGIN_LEFT = 0.05
 MARGIN_RIGHT = 0.05
 
+MAX_PDF_BYTES = 30 * 1024 * 1024  # 30 MB
+
 async def download_pdf_to_tmp(url: HttpUrl) -> str:
     """Download a PDF from URL to a temporary file and return its path."""
     async with httpx.AsyncClient(follow_redirects=True, timeout=60.0) as client:
+        head = await client.head(str(url))
+        content_type = head.headers.get("content-type", "")
+        if "pdf" not in content_type and "octet-stream" not in content_type:
+            raise ValueError(f"URL does not point to a PDF (Content-Type: {content_type})")
+        content_length = head.headers.get("content-length")
+        if content_length and int(content_length) > MAX_PDF_BYTES:
+            raise ValueError(f"PDF is too large (max {MAX_PDF_BYTES // 1024 // 1024} MB)")
+
         resp = await client.get(str(url))
         resp.raise_for_status()
+
+    if len(resp.content) > MAX_PDF_BYTES:
+        raise ValueError(f"PDF is too large (max {MAX_PDF_BYTES // 1024 // 1024} MB)")
 
     if not resp.content.startswith(b"%PDF"):
         raise ValueError("Downloaded file is not a valid PDF")

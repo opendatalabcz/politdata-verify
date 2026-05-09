@@ -159,7 +159,7 @@ class MilvusInterface:
         for col in collections:
             try:
                 await self.async_client.load_collection(col)
-                rows = self.client.query(collection_name=col, filter="", output_fields=["party"], limit=16384)
+                rows = self.client.query(collection_name=col, filter="", output_fields=["party", "doc_name"], limit=16384)
                 parties = list({r["party"] for r in rows if r.get("party")})
                 party_stats = []
                 for party in sorted(parties):
@@ -168,7 +168,15 @@ class MilvusInterface:
                         filter=f"party == '{party}'",
                         output_fields=["count(*)"],
                     )
-                    party_stats.append({"party": party, "chunk_count": count_rows[0]["count(*)"]})
+                    name_rows = self.client.query(
+                        collection_name=col,
+                        filter=f"party == '{party}'",
+                        output_fields=["doc_name", "content"],
+                        limit=16384,
+                    )
+                    doc_names = list({r["doc_name"] for r in name_rows if r.get("doc_name")})
+                    total_chars = sum(len(r.get("content", "")) for r in name_rows)
+                    party_stats.append({"party": party, "chunk_count": count_rows[0]["count(*)"], "doc_names": doc_names, "total_chars": total_chars})
                 await self.async_client.release_collection(col)
                 result.append({"collection_name": col, "parties": party_stats})
             except Exception as e:

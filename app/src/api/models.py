@@ -43,6 +43,10 @@ class Document(BaseModel):
     party: str | None = None
     year: int | None = None
 
+    def model_post_init(self, __context):
+        if not self.url.startswith("https://"):
+            raise ValueError("Document URL must use HTTPS")
+
 class DocumentPayload(BaseModel):
     """
     Model representing a collection of documents.

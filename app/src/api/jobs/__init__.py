@@ -1,7 +1,9 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 from app.src.api.models import *
 from app.src.api.auth import verify_api_key
+from app.src.api.admin_auth import verify_admin_token
+from app.src.api.rate_limiter import check_rate_limit, MAX_QUERY_CHARS
 from app.src.api import job_store
 
 from app.src.chunking.pdf_chunker import pdf_chunker
@@ -13,7 +15,8 @@ router = APIRouter(dependencies=[Depends(verify_api_key)])
 @router.post("/classify_statements")
 async def run_classify_statements_job(
     request: JobRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    http_request: Request
 ):
     """
     Endpoint to start a classify statements job.
@@ -22,12 +25,17 @@ async def run_classify_statements_job(
 
     job_id = request.job_id
     payload = request.payload
+    for s in payload.statements:
+        if len(s.query) > MAX_QUERY_CHARS:
+            raise HTTPException(status_code=400, detail=f"Výrok je příliš dlouhý. Maximum je {MAX_QUERY_CHARS} znaků.")
+    combined_text = " ".join(s.query for s in payload.statements)
+    check_rate_limit(http_request, combined_text)
     job_store.set_pending(str(job_id))
     background_tasks.add_task(classify_statement_job, job_id, payload.model_dump())
 
     return {"status": "Classify statements job has been started", "job_id": str(job_id)}
 
-@router.post("/add_document")
+@router.post("/add_document", dependencies=[Depends(verify_admin_token)])
 async def run_add_document_job(
     request: JobRequest,
     background_tasks: BackgroundTasks
@@ -45,7 +53,7 @@ async def run_add_document_job(
     return {"status": "Add document job has been started", "job_id": str(job_id)}
 
 @router.post("/verify_political_statements")
-async def verify_political_statements(request: JobRequest, background_tasks: BackgroundTasks):
+async def verify_political_statements(request: JobRequest, background_tasks: BackgroundTasks, http_request: Request):
     """
     Endpoint to start a verify political statements job.
     """
@@ -53,6 +61,7 @@ async def verify_political_statements(request: JobRequest, background_tasks: Bac
 
     job_id = request.job_id
     payload = request.payload
+    check_rate_limit(http_request, payload.text)
     job_store.set_pending(str(job_id))
     background_tasks.add_task(verify_political_statements_job, job_id, payload)
 

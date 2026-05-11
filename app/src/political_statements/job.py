@@ -1,5 +1,5 @@
 """
-main pipeline
+Main pipeline: extract statements from debate text, classify each against party program.
 """
 import asyncio
 import logging
@@ -13,18 +13,13 @@ from app.src.political_statements.statement_classification import classify_state
 from app.src.political_statements.statements_extraction import extract_political_statements
 from app.src.political_statements.utils import generate_stats
 logger = logging.getLogger(__name__)
-semaphore = asyncio.Semaphore(5)
+semaphore = asyncio.Semaphore(5)  # max concurrent classification requests
 MODES = Literal["sync", "async"]
 
 async def verify_political_statements(text: str, mode: MODES, speakers_list: list[Speaker] | None = None,
                                           collection_name: str = "test_collection",
                                           year: int = 2025) -> StatsResult:
-    """
-    Placeholder function for verifying political statements job.
-    """
-    # 1. Extract statements from the text
-    # 2. Classify each statement using the classify_statement function
-    # 3. Return the results in a structured format
+    """Extract statements from debate text and classify each against the party program."""
     start_time = time.perf_counter()
     extracted_statements = await extract_political_statements(text, mode, speakers_list)
     end_time = time.perf_counter()

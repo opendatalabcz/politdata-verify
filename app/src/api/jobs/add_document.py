@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 async def add_document_job(job_id: uuid.UUID, payload: dict):
+    """chunk each document PDF and insert chunks into the specified Milvus collection."""
     job_store.set_pending(str(job_id))
     try:
         documents = [Document(**d) for d in payload["documents"]]

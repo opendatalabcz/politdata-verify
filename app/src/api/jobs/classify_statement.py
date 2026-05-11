@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 async def classify_statement_job(job_id: uuid.UUID, payload: dict):
+    """classify each statement in payload against the Milvus collection and store results."""
     job_store.set_pending(str(job_id))
     try:
         client = Client()

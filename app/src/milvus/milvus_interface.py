@@ -16,14 +16,13 @@ logger = logging.getLogger(__name__)
 
 URL = os.getenv("MILVUS_URI", "http://milvus-standalone:19530")
 # URL = "http://localhost:19530"
-RETRIEVAL_TOP_K = 20
-RERANKER_DENSE_FACTOR = 0.4
+RETRIEVAL_TOP_K = 20  # results per query; final top-k selection is done in search.py across all queries
+RERANKER_DENSE_FACTOR = 0.4  # BM25 carries more weight in political domain (exact terms matter more)
 RERANKER_SPARSE_FACTOR = 0.6
-MILVUS_MAX_INSERT_BATCH_SIZE = 1000
+MILVUS_MAX_INSERT_BATCH_SIZE = 1000  # Milvus insert limit per batch
 
 class MilvusInterface:
     def __init__(self):
-        """contains config"""
 
         self.uri = URL
         self.async_client = AsyncMilvusClient(uri=self.uri)
@@ -154,6 +153,7 @@ class MilvusInterface:
 
 
     async def list_collections_with_stats(self) -> list[dict]:
+        """return all collections with per-party chunk counts and document names."""
         collections = self.client.list_collections()
         result = []
         for col in collections:

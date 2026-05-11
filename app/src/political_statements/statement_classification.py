@@ -1,5 +1,5 @@
 """
-file to classify political statements
+Fact-checking pipeline: retrieves context from Milvus and classifies a statement via GPT-4o.
 """
 from app.src.clients.openai_client import Client
 from app.src.milvus.search import search
@@ -74,6 +74,7 @@ async def classify_with_context(
     milvus_interface,
     year
 ) -> ClassifiedStatementWithContext:
+    """classify a statement and attach speaker context; semaphore limits concurrent OpenAI calls."""
     async with semaphore:
         verdict = await classify_statement(
             query=statement,
@@ -95,18 +96,7 @@ async def classify_with_context(
 
 
 async def classify_statement(query: str, collection_name: str, client: Client, **kwargs) -> ClassifiedStatement:
-    """
-    Classify a political statement into predefined categories.
-
-    Args:
-        query (str): The political statement to classify.
-        collection_name (str): The name of the Milvus collection to search for context.
-        client (Client): An instance of the OpenAI client to use for classification.
-        **kwargs: Additional keyword arguments, such as 'party' and 'year'.
-
-    Returns:
-        ClassifiedStatement: The classified statement with verdict, rationale, evidence, and confidence.
-    """
+    """Retrieve relevant context from Milvus and classify the statement."""
     party = kwargs.get("party", None)
     year = kwargs.get("year", None)
     interface = kwargs.get("interface", None)
@@ -118,5 +108,5 @@ async def classify_statement(query: str, collection_name: str, client: Client, *
             "content": f"{context}, <query>{query}</query>",
         },
     ]
-    answer = await client.get_structured_response_async(messages, schema=ClassifiedStatement, model=MODEL)
+    answer = await client.get_structured_response_async(messages, schema=ClassifiedStatement, model=MODEL, temperature=0.0)
     return answer

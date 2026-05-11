@@ -1,17 +1,22 @@
+"""
+in-memory IP-based rate limiter: enforces per-hour call limit and per-day character budget.
+state is process-local and resets on restart — sufficient for single-instance deployments.
+"""
 import time
 from collections import defaultdict
 from fastapi import HTTPException, Request
 
-MAX_CALLS_PER_HOUR = 5
-MAX_CHARS_PER_DAY = 5000
-MAX_INPUT_CHARS = 5000
-MAX_QUERY_CHARS = 500
+MAX_CALLS_PER_HOUR = 5    # max verification requests per IP per hour
+MAX_CHARS_PER_DAY = 5000  # max total input characters per IP per 24 h
+MAX_INPUT_CHARS = 5000    # hard cap on a single request's text length
+MAX_QUERY_CHARS = 500     # hard cap on a single statement query
 
-_calls: dict[str, list[float]] = defaultdict(list)
-_chars: dict[str, tuple[float, int]] = {}
+_calls: dict[str, list[float]] = defaultdict(list)  # ip -> list of call timestamps
+_chars: dict[str, tuple[float, int]] = {}            # ip -> (window_start, chars_used)
 
 
 def _get_ip(request: Request) -> str:
+    """extract client IP, respecting X-Forwarded-For when behind a proxy."""
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0].strip()
@@ -19,6 +24,7 @@ def _get_ip(request: Request) -> str:
 
 
 def check_rate_limit(request: Request, text: str) -> None:
+    """raise 400/429 if the request exceeds size or rate limits for its source IP."""
     ip = _get_ip(request)
     now = time.time()
 

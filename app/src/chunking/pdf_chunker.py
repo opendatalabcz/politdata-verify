@@ -12,15 +12,12 @@ from app.src.chunking.utils import extract_spans_with_sizes, detect_headings, gr
 from app.src.embeddings.jina_client import JinaEmbedder
 from app.src.milvus.milvus_interface import MilvusInterface
 
-tokenizer = tiktoken.get_encoding("cl100k_base")  # Jina/OpenAI compatible
+tokenizer = tiktoken.get_encoding("cl100k_base")  # GPT-4o / Jina compatible tokenizer
+MAX_TOKENS = 400   # soft upper bound per chunk (tokens)
+OVERLAP_TOKENS = 80  # token overlap between consecutive chunks from the same block
 
-def chunk_heading_aware(blocks, max_tokens=400, overlap_tokens=80) -> List[dict]:
-    """
-    Chunks text based on pre-grouped blocks from utils.py.
-    Each block in 'blocks' is considered a semantic unit (Heading + Body).
-    We treat these as hard boundaries (we do not merge separate blocks),
-    but we split them internally if they exceed max_tokens.
-    """
+def chunk_heading_aware(blocks, max_tokens=MAX_TOKENS, overlap_tokens=OVERLAP_TOKENS) -> List[dict]:
+    """split heading-body blocks into token-bounded chunks with sliding overlap."""
     chunks = []
 
     def token_len(text):
@@ -68,11 +65,7 @@ def chunk_heading_aware(blocks, max_tokens=400, overlap_tokens=80) -> List[dict]
     return chunks
 
 async def pdf_chunker(url: HttpUrl, document_name: str, party: str, year: int) -> List[Chunk]:
-    """
-    Chunk a PDF into text chunks.
-    :param url:
-    :return:
-    """
+    """download PDF, extract spans, chunk by heading boundaries, embed and return Chunk objects."""
     embedder = JinaEmbedder()
     tmp_path = await download_pdf_to_tmp(HttpUrl(url))
     spans = extract_spans_with_sizes(tmp_path)

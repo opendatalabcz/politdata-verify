@@ -1,3 +1,7 @@
+"""
+document-level context enrichment: extracts party/ideology summary prepended to every chunk
+so embeddings carry document-level context (HyDE-style enrichment).
+"""
 from app.src.clients.openai_client import Client
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -11,10 +15,7 @@ class GlobalContext(BaseModel):
     main_priorities: str = Field(description="Comma separated top 5 themes")
 
     def to_context_string(self) -> str:
-        """
-        Formats the global context into a string to prepend to chunks.
-        Example: "CONTEXT: Party: ANO 2011 (2025) | Ideology: Populist centrist... | Focus: Pensions, Tax..."
-        """
+        """format context as a prefix string prepended to each chunk before embedding."""
         return f"CONTEXT: Party: {self.party_name} ({self.year}) | Ideology: {self.ideology} | Priorities: {self.main_priorities}\n--- CHUNK ---\n"
 
 class ContextEnricher:
@@ -22,11 +23,7 @@ class ContextEnricher:
         self.client = Client()
 
     def extract_context(self, full_text: str) -> GlobalContext:
-        """
-        Uses LLM to extract global context from the full document text.
-        :param full_text: The complete text of the document.
-        :return: GlobalContext object with extracted information.
-        """
+        """use LLM to extract party name, year, ideology and top priorities from full document text."""
         model = "gpt-4o-mini"
         messages = [
             {"role": "system", "content": "You are a political analyst. Extract global context JSON."},

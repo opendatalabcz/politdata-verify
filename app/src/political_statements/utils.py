@@ -11,8 +11,9 @@ from typing import List
 from app.src.political_statements.models import Speaker, ClassifiedStatementWithContext, ExtractionResult, \
     SpeakerStats, StatsResult
 
-URL = "https://www.psp.cz/eknih/cdrom/opendata/poslanci.zip"
+URL = "https://www.psp.cz/eknih/cdrom/opendata/poslanci.zip"  # PSP open data, updated after each election
 
+# maps PSP parliamentary club names to canonical party names used in Milvus collections
 POLITICAL_PARTIES_MAPPING = {
     "ANO2011": "ANO 2011",
     "KDU-ČSL": "KDU-ČSL",
@@ -26,6 +27,7 @@ POLITICAL_PARTIES_MAPPING = {
 
 def generate_stats(classified_statements: List[ClassifiedStatementWithContext], extracted_statements: ExtractionResult)\
         -> StatsResult:
+    """aggregate classification results per speaker into a StatsResult."""
     all_statements = len([statement for speaker in extracted_statements.speakers for statement in speaker.statements])
     all_speakers = len(extracted_statements.speakers)
 
@@ -48,6 +50,7 @@ def generate_stats(classified_statements: List[ClassifiedStatementWithContext], 
     return StatsResult(total_speakers=all_speakers, total_statements=all_statements, speakers_stats=speakers_stats)
 
 def debug_psp():
+    """print raw PSP open data files for debugging."""
     r = requests.get(URL, timeout=30)
     z = zipfile.ZipFile(io.BytesIO(r.content))
 
@@ -62,6 +65,7 @@ def debug_psp():
 
 @lru_cache(maxsize=1)
 def get_poslanec_lookup() -> dict[str, str]:
+    """return a name → party lookup dict built from PSP open data. result is cached."""
     r = requests.get(URL, timeout=30)
     z = zipfile.ZipFile(io.BytesIO(r.content))
 
@@ -103,6 +107,7 @@ def get_poslanec_lookup() -> dict[str, str]:
 
 
 def get_active_politicians():
+    """return a DataFrame of currently active MPs with their club/party assignments."""
     r = requests.get(URL, timeout=30)
     z = zipfile.ZipFile(io.BytesIO(r.content))
 
@@ -161,6 +166,7 @@ def get_active_politicians():
 
 
 def extract_party_from_club(club_name: str) -> str:
+    """strip 'Poslanecký klub' prefix from a club name."""
     return re.sub(r"Poslanecký klub\s*", "", club_name).strip()
 
 
@@ -168,6 +174,8 @@ def resolve_party(
     speaker: Speaker,
     provided_speakers: List[Speaker] | None,
 ) -> tuple[str | None, str]:
+    """resolve speaker's party using three sources in priority order:
+    1. caller-provided speaker list, 2. PSP open data lookup, 3. text extracted by LLM."""
     provided_party = None
     if provided_speakers:
         prov_match = next(

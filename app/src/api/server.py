@@ -1,3 +1,6 @@
+"""
+FastAPI application entry point. Registers all routers, CORS middleware, and top-level endpoints.
+"""
 import logging
 import uuid
 

@@ -1,5 +1,5 @@
 """
-models
+chunking data models
 """
 import json
 import uuid
@@ -23,9 +23,7 @@ class Chunk(BaseModel):
     metadata: Dict[str, Any]
 
     async def to_milvus_dict(self) -> Dict:
-        """
-        Helper: Converts instance to dict for insertion into Milvus collection
-        """
+        """convert chunk to a flat dict ready for Milvus insert (metadata serialized to JSON string)."""
         milvus_dict = {
             "id": str(self.id),
             "doc_name": self.doc_name,

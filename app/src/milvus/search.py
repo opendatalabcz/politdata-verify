@@ -1,3 +1,7 @@
+"""
+multi-query hybrid search: expands the user query into 5 variants, runs hybrid search for each,
+then selects top-K chunks by retrieval frequency across all queries.
+"""
 import logging
 from typing import Dict, List
 from collections import Counter
@@ -8,9 +12,10 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 MODEL = "gpt-4o-mini"
-CONTEXT_MAX_LEN = 70000
-TOP_K = 40
+CONTEXT_MAX_LEN = 70000  # stays within GPT-4o context window
+TOP_K = 40  # number of top chunks selected by frequency across all queries
 
+# ODS, TOP 09 and KDU-ČSL run jointly as SPOLU and share one electoral program
 PARTY_ALIAS_MAP: Dict[str, str] = {
     "ODS": "SPOLU",
     "TOP 09": "SPOLU",
@@ -18,6 +23,7 @@ PARTY_ALIAS_MAP: Dict[str, str] = {
 }
 
 def normalize_party(party: str | None) -> str | None:
+    """map coalition member parties (ODS, TOP 09, KDU-ČSL) to their shared SPOLU collection name."""
     if party is None:
         return None
     return PARTY_ALIAS_MAP.get(party.strip(), party)
@@ -26,11 +32,7 @@ class Queries(BaseModel):
     queries: List[str]
 
 async def generate_multi_queries(query: str) -> Queries:
-    """
-    Generate multiple queries from the original query to improve search recall.
-    :param query:
-    :return:
-    """
+    """Generate 5 query variants to improve recall in hybrid search."""
     system_prompt = """
     You are an expert political analyst and search engine optimization specialist. 
     Your task is to take a specific political claim or campaign promise and generate 5 different search queries to retrieve relevant evidence from official political program documents.
@@ -55,16 +57,7 @@ async def generate_multi_queries(query: str) -> Queries:
     return queries
 
 async def search(collection_name: str, query: str, **kwargs) -> str:
-    """
-    Perform hybrid search on milvus collection
-
-    Args:
-        collection_name (str):   milvus collection name
-        query (str):             search query
-
-    Returns:
-        List[Dict[str, Any]]:    list of relevant chunks
-    """
+    """Run multi-query hybrid search and return context as an XML string."""
 
     interface = kwargs.get("interface") or MilvusInterface()
     year = kwargs.get("year", None)
@@ -85,6 +78,7 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
         if results and len(results) > 0:
             all_chunks.extend([hit['entity'] for hit in results[0]])
 
+    # chunks appearing across more queries are ranked higher
     chunk_counts = Counter(chunk['id'] for chunk in all_chunks)
 
     id_to_chunk = {chunk['id']: chunk for chunk in all_chunks}
@@ -112,7 +106,7 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
         if idx == 0:
             logger.info(f"Most relevant chunk: {context}")
     context += "</context>\n"
-    return context[:CONTEXT_MAX_LEN]
+    return context[:CONTEXT_MAX_LEN]  # hard truncation as a safety fallback
 
 if __name__ == "__main__":
     async def main():

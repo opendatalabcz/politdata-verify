@@ -1,7 +1,11 @@
+"""
+logging configuration: colored console output (green=INFO, yellow=WARNING, red=ERROR).
+"""
 import logging
 
 
 class SimpleColorFormatter(logging.Formatter):
+    """logging formatter that colorizes the level name using ANSI escape codes."""
     COLORS = {
         logging.INFO: "\033[92m",
         logging.WARNING: "\033[93m",
@@ -22,6 +26,7 @@ class SimpleColorFormatter(logging.Formatter):
 
 
 def setup_logging():
+    """configure root logger with colored console handler at INFO level."""
     handler = logging.StreamHandler()
 
     formatter = SimpleColorFormatter(

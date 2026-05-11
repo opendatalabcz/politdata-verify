@@ -1,3 +1,6 @@
+"""
+experimental Jina Reader preprocessing — not used in the main pipeline (pdf_chunker.py is used instead).
+"""
 import os
 import requests
 from dotenv import load_dotenv
@@ -6,7 +9,7 @@ load_dotenv()
 JINA_API_KEY = os.getenv("JINA_API_KEY")
 
 def jina_ai_to_markdown(url: str) -> str:
-
+    """fetch a URL via Jina Reader API and return its content as markdown."""
     url = f"https://r.jina.ai/{url}"
     headers = {
         "Authorization": f"Bearer {JINA_API_KEY}",

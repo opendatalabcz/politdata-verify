@@ -1,5 +1,5 @@
 """
-classify statements API job
+background job wrapper for the verify_political_statements pipeline.
 """
 import logging
 import uuid
@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 async def verify_political_statements_job(job_id: uuid.UUID, payload: VerifyStatementsPayload):
+    """run the full extraction + classification pipeline and store the StatsResult in job_store."""
     job_store.set_pending(str(job_id))
     try:
         result = await verify_political_statements(

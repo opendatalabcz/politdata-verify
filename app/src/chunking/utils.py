@@ -9,8 +9,8 @@ import numpy as np
 import tiktoken
 
 from pydantic import HttpUrl
-PAGE_WIDTH_THRESHOLD = 800
-COLUMN_BUCKET_WIDTH = 200
+PAGE_WIDTH_THRESHOLD = 800  # pages wider than this are treated as two-column layouts
+COLUMN_BUCKET_WIDTH = 200  # horizontal bucket size for column-aware span sorting
 
 MARGIN_TOP = 0.05
 MARGIN_BOTTOM = 0.05
@@ -47,12 +47,14 @@ async def download_pdf_to_tmp(url: HttpUrl) -> str:
 
 
 def sort_spans_layout(spans):
+    """sort spans by column bucket then vertical position to preserve reading order."""
     return sorted(
         spans,
         key=lambda b: (int(b["bbox"][0] / COLUMN_BUCKET_WIDTH), b["bbox"][1], b["bbox"][0])
     )
 
 def extract_spans_with_sizes(pdf_path):
+    """extract text spans with font size and position from a PDF, handling two-column layouts."""
     doc = fitz.open(pdf_path)
     all_spans = []
 
@@ -114,6 +116,7 @@ def extract_spans_with_sizes(pdf_path):
     return all_spans
 
 def detect_headings(spans):
+    """mark spans as headings if their font size exceeds 1.2× the median."""
     sizes = [s["size"] for s in spans]
     median = np.median(sizes)
     threshold = median * 1.2
@@ -124,6 +127,7 @@ def detect_headings(spans):
     return spans
 
 def group_blocks(spans):
+    """group spans into heading+body blocks; each heading starts a new block."""
     blocks = []
     current_block = None
     heading = False
@@ -163,6 +167,7 @@ def group_blocks(spans):
     return blocks
 
 def get_stats(path):
+    """return page count, character count and token count for a PDF."""
     doc = fitz.open(path)
     tokenizer = tiktoken.get_encoding("cl100k_base")  # GPT-4o encoding
 

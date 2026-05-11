@@ -1,5 +1,6 @@
 """
-jina AI client to interact with jina AI embedding service
+Jina AI embedding client (jina-embeddings-v4).
+Supports task-typed embeddings: retrieval.query for queries, retrieval.passage for indexed chunks.
 """
 import json
 import os
@@ -12,6 +13,7 @@ load_dotenv()
 JINA_API_KEY = os.getenv("JINA_API_KEY")
 URL = "https://api.jina.ai/v1/embeddings"
 MODEL = "jina-embeddings-v4"
+BATCH_SIZE = 30  # Jina API limit per request
 
 class JinaEmbedder:
     def __init__(self):
@@ -19,6 +21,7 @@ class JinaEmbedder:
 
     @staticmethod
     async def get_embedding(text: Dict[str, Any], task: str, **kwargs) -> List[float]:
+        """get a single embedding for text dict input (used at query time in hybrid search)."""
         url = "https://api.jina.ai/v1/embeddings"
         model = kwargs.get("model", MODEL)
         headers = {
@@ -32,16 +35,13 @@ class JinaEmbedder:
         }
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
-        # print(response.json())
         data = response.json()["data"]
         embedding = data[0]["embedding"]
         return embedding
 
     @staticmethod
-    async def get_embeddings_batch_jina(texts: List[str], task: str, batch_size: int = 30, **kwargs) -> List[List[float]]:
-        """
-        Get embeddings for a batch of texts using Jina API asynchronously
-        """
+    async def get_embeddings_batch_jina(texts: List[str], task: str, batch_size: int = BATCH_SIZE, **kwargs) -> List[List[float]]:
+        """get embeddings for a list of texts in batches; preserves original order via index sort."""
         model = kwargs.get("model", MODEL)
         headers = {
             "Authorization": f"Bearer {JINA_API_KEY}",

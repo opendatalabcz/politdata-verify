@@ -1,17 +1,15 @@
 """
-create schema
+Milvus collection schema: dense (HNSW, 2048-dim Jina) + sparse (BM25 auto-generated from content).
 """
 import json
 
 from pymilvus import FieldSchema, DataType, Function, FunctionType, CollectionSchema
 
-DENSE_VECTOR_DIM = 2048
+DENSE_VECTOR_DIM = 2048  # jina-embeddings-v4 output dimension
 SCHEMA_VERSION = 1.0
 
 def create_schema(collection_name: str, **kwargs) -> CollectionSchema:
-    """
-    Returns the Milvus collection schema
-    """
+    """build and return the CollectionSchema used for all RAG collections."""
 
     fields = [
         FieldSchema(

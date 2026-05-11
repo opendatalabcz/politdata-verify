@@ -98,6 +98,7 @@ async def extract_political_statements(text: str, mode: MODES, speakers_list: li
             provided_speakers=speakers_list,
         )
 
+        # discard statements the model assigned low confidence to
         filtered = [s for s in stmt_result.statements if s.confidence >= 0.7]
         if filtered and resolution != "unresolvable":
             speaker_results.append(SpeakerStatements(

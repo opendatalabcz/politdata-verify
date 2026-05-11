@@ -9,12 +9,14 @@ from typing import Dict, Any, List, Literal
 logger = logging.getLogger(__name__)
 
 class Speaker(BaseModel):
+    """identified speaker with optional party and photo URL resolved from PSP open data."""
     name: str
     surname: str
     party: str | None = None
     photo_url: str | None = None
 
 class Speakers(BaseModel):
+    """LLM-extracted list of speakers from debate text."""
     speakers: List[Speaker]
 
 class Statement(BaseModel):
@@ -29,10 +31,12 @@ class Statement(BaseModel):
     )
 
 class SpeakerStatements(BaseModel):
+    """one speaker paired with their extracted statements."""
     speaker: "Speaker"
     statements: List[Statement]
 
 class ExtractionResult(BaseModel):
+    """full extraction output: all speakers and their filtered statements."""
     speakers: List[SpeakerStatements]
 
 CLASSIFICATION = Literal["SUPPORTED", "CONTRADICTED", "INSUFFICIENT"]
@@ -61,6 +65,7 @@ class ClassifiedStatementWithContext(ClassifiedStatement):
     statement: str
 
 class SpeakerStats(BaseModel):
+    """aggregated classification results for one speaker."""
     speaker: Speaker
     total_statements: int
     supported: List[ClassifiedStatementWithContext]
@@ -68,11 +73,13 @@ class SpeakerStats(BaseModel):
     insufficient: List[ClassifiedStatementWithContext]
 
 class StatsResult(BaseModel):
+    """top-level pipeline result returned from verify_political_statements."""
     total_speakers: int
     total_statements: int
     speakers_stats: List[SpeakerStats]
 
     def pretty_print(self):
+        """log a human-readable summary of results."""
         logger.info(f"Total Speakers: {self.total_speakers}")
         logger.info(f"Total Statements: {self.total_statements}")
         for speaker_stat in self.speakers_stats:

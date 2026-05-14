@@ -13,28 +13,27 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
   const [text, setText] = useState('')
   const [collections, setCollections] = useState<string[]>([])
   const [collection, setCollection] = useState('')
-  const [customCol, setCustomCol] = useState('')
-  const colNameValid = /^[a-zA-Z_][a-zA-Z0-9_]{0,254}$/.test(customCol)
   const [year, setYear] = useState(2025)
   const [mode, setMode] = useState<'sync' | 'async'>('async')
   const [submitting, setSubmitting] = useState(false)
+  const [loadingCollections, setLoadingCollections] = useState(true)
 
   useEffect(() => {
     fetchCollections()
       .then(cols => {
         const names = cols.map(c => c.collection_name)
         setCollections(names)
-        setCollection(names.length > 0 ? names[0] : '__new__')
+        if (names.length > 0) setCollection(names[0])
       })
       .catch(() => {})
+      .finally(() => setLoadingCollections(false))
   }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    if (collection === '__new__' && !colNameValid) return
     setSubmitting(true)
-    const resolvedCol = collection === '__new__' ? customCol.trim() : collection
+    const resolvedCol = collection
     await onSubmit(text, resolvedCol, year, mode)
     setSubmitting(false)
   }
@@ -67,30 +66,15 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
           <select
             id="collection"
             value={collection}
-            onChange={e => {
-              setCollection(e.target.value)
-              if (e.target.value !== '__new__') setCustomCol('')
-            }}
+            onChange={e => setCollection(e.target.value)}
             className="select-input"
+            disabled={loadingCollections || collections.length === 0}
           >
-            {collections.map(c => <option key={c} value={c}>{c}</option>)}
-            <option value="__new__">+ Nová kolekce…</option>
+            {loadingCollections
+              ? <option>Načítám…</option>
+              : collections.map(c => <option key={c} value={c}>{c}</option>)
+            }
           </select>
-          {collection === '__new__' && (
-            <>
-              <input
-                type="text"
-                value={customCol}
-                onChange={e => setCustomCol(e.target.value)}
-                placeholder="napr_volby_2025"
-                style={{ marginTop: '8px', borderColor: customCol && !colNameValid ? 'var(--red)' : undefined }}
-              />
-              {customCol && !colNameValid
-                ? <span style={{ fontSize: '12px', color: 'var(--red)' }}>Pouze písmena, číslice a podtržítka. Musí začínat písmenem nebo _.</span>
-                : <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Povolené znaky: a–z, A–Z, 0–9, _</span>
-              }
-            </>
-          )}
         </div>
         <div className="form-group form-group-narrow">
           <label htmlFor="year">Rok</label>
@@ -146,7 +130,7 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
             {mode === 'async' ? 'Výroky se zpracují současně — rychlejší.' : 'Výroky se zpracují jeden po druhém.'}
           </span>
         </div>
-        <span className="hint">Analýza může trvat 30–120 sekund.</span>
+        <span className="hint">{mode === 'async' ? 'Analýza může trvat 30–120 sekund.' : 'Analýza může trvat déle.'}</span>
       </div>
     </form>
   )

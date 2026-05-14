@@ -362,7 +362,7 @@ export default function DocumentsPage({ adminUnlocked }: { adminUnlocked: boolea
             <div className="success-icon">✅</div>
             <p className="loading-title" style={{ color: 'var(--green)' }}>Dokument úspěšně nahrán!</p>
             <p className="loading-sub">
-              Dokument <strong>"{name}"</strong> byl rozsekaný a uložen do kolekce <strong>{collection}</strong>.
+              Dokument <strong>"{name}"</strong> byl rozsekaný a uložen do kolekce <strong>{collection === '__new__' ? customCol.trim() : collection}</strong>.
             </p>
             <div style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button className="btn btn-primary" onClick={handleAddAnother}>

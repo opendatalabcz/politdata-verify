@@ -84,25 +84,19 @@ export default function SingleStatementForm({ onSubmit, error }: Props) {
         </div>
         <div className="form-group">
           <label htmlFor="s-party">Strana</label>
-          {loadingParties ? (
-            <select id="s-party" className="select-input" disabled>
-              <option>Načítám…</option>
-            </select>
-          ) : parties.length === 0 ? (
-            <select id="s-party" className="select-input" disabled>
-              <option>Žádné strany v kolekci</option>
-            </select>
-          ) : (
-            <select
-              id="s-party"
-              value={party}
-              onChange={e => setParty(e.target.value)}
-              className="select-input"
-              required
-            >
-              {parties.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          )}
+          <select
+            id="s-party"
+            value={party}
+            onChange={e => setParty(e.target.value)}
+            className="select-input"
+            disabled={loadingParties || parties.length === 0}
+            required
+          >
+            {loadingParties
+              ? <option>Načítám…</option>
+              : parties.map(p => <option key={p} value={p}>{p}</option>)
+            }
+          </select>
         </div>
         <div className="form-group form-group-narrow">
           <label htmlFor="s-year">Rok</label>

@@ -21,15 +21,15 @@ Součást bakalářské práce: *Ověřování politických výroků na základ�
 
 ```
 PDF volebního programu
-          │
-          ▼
-    Chunking (heading-aware)
-          │
-          ▼
-  Embeddings (Jina AI) + BM25
-          │
-          ▼
-       Milvus
+     │
+     ▼
+Chunking (heading-aware)
+     │
+     ▼
+Embeddings (Jina AI) + BM25
+     │
+     ▼
+Milvus
 ```
 
 **Ověřovací fáze** (při každém dotazu):

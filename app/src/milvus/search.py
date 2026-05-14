@@ -22,11 +22,18 @@ PARTY_ALIAS_MAP: Dict[str, str] = {
     "KDU-ČSL": "SPOLU",
 }
 
-def normalize_party(party: str | None) -> str | None:
-    """map coalition member parties (ODS, TOP 09, KDU-ČSL) to their shared SPOLU collection name."""
+async def normalize_party(party: str | None, collection_name: str, interface: MilvusInterface) -> str | None:
+    """Map ODS/TOP 09/KDU-ČSL to SPOLU unless the party exists directly in the collection."""
     if party is None:
         return None
-    return PARTY_ALIAS_MAP.get(party.strip(), party)
+    party = party.strip()
+    alias = PARTY_ALIAS_MAP.get(party)
+    if alias is None:
+        return party
+    exists = await interface.party_exists_in_collection(collection_name, party)
+    resolved = party if exists else alias
+    logger.info(f"[NORMALIZE_PARTY] '{party}' → '{resolved}' (direct match: {exists})")
+    return resolved
 
 class Queries(BaseModel):
     queries: List[str]
@@ -61,7 +68,7 @@ async def search(collection_name: str, query: str, **kwargs) -> str:
 
     interface = kwargs.get("interface") or MilvusInterface()
     year = kwargs.get("year", None)
-    party = normalize_party(kwargs.get("party", None))
+    party = await normalize_party(kwargs.get("party", None), collection_name, interface)
 
     all_chunks = []
     logger.info(f"[MILVUS SEARCH] Generating multiple queries for: {query}")

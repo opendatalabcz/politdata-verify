@@ -152,6 +152,15 @@ class MilvusInterface:
 
 
 
+    async def party_exists_in_collection(self, collection_name: str, party: str) -> bool:
+        """check if any chunks with the given party name exist in the collection."""
+        if not self.has_collection(collection_name):
+            return False
+        await self.async_client.load_collection(collection_name)
+        rows = self.client.query(collection_name=collection_name, filter=f"party == '{party}'", output_fields=["count(*)"])
+        await self.async_client.release_collection(collection_name)
+        return rows[0]["count(*)"] > 0
+
     async def list_collections_with_stats(self) -> list[dict]:
         """return all collections with per-party chunk counts and document names."""
         collections = self.client.list_collections()

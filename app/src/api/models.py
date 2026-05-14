@@ -1,11 +1,22 @@
 """
 api models package
 """
+import re
 import uuid
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List, Literal, Union
 
 from app.src.political_statements.models import ClassifiedStatement, Speaker, StatsResult
+
+_COLLECTION_NAME_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]{0,254}$')
+
+def _validate_collection_name(v: str) -> str:
+    if not _COLLECTION_NAME_RE.match(v):
+        raise ValueError(
+            "Název kolekce smí obsahovat pouze písmena, číslice a podtržítka, "
+            "musí začínat písmenem nebo podtržítkem a mít nejvýše 255 znaků."
+        )
+    return v
 
 class VerifyStatementsPayload(BaseModel):
     """
@@ -17,6 +28,8 @@ class VerifyStatementsPayload(BaseModel):
     year: int = 2025
     mode: Literal["sync", "async"] = "async"
 
+    _validate_col = field_validator("collection_name")(_validate_collection_name)
+
 
 class Statement(BaseModel):
     """
@@ -26,6 +39,8 @@ class Statement(BaseModel):
     collection_name: str
     party: str | None = None
     year: int | None = None
+
+    _validate_col = field_validator("collection_name")(_validate_collection_name)
 
 class StatementsPayload(BaseModel):
     """
@@ -42,6 +57,8 @@ class Document(BaseModel):
     collection_name: str
     party: str | None = None
     year: int | None = None
+
+    _validate_col = field_validator("collection_name")(_validate_collection_name)
 
     def model_post_init(self, __context):
         if not self.url.startswith("https://"):

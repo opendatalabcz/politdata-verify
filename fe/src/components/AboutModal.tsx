@@ -72,6 +72,35 @@ export default function AboutModal({ onClose }: Props) {
           </div>
 
           <div className="about-section">
+            <h3>Co jsou kolekce</h3>
+            <div className="how-to-grid">
+              <div className="how-to-card">
+                <div className="how-to-icon">📁</div>
+                <div>
+                  <strong>Nová kolekce</strong>
+                  <p>
+                    Kolekce je pojmenovaná znalostní báze nahraných dokumentů, vůči které
+                    se výroky ověřují. Vytvořte samostatnou kolekci pro každou logicky oddělenou
+                    sadu — například <em>volby_2025</em> pro programy z voleb 2025,
+                    <em> volby_2021</em> pro starší období nebo <em>koalicni_smlouva</em> pro
+                    jiný typ dokumentů.
+                  </p>
+                </div>
+              </div>
+              <div className="how-to-card">
+                <div className="how-to-icon">📂</div>
+                <div>
+                  <strong>Stávající kolekce</strong>
+                  <p>
+                    Pokud chcete rozšířit stávající znalostní bázi o další dokument,
+                    nahrajte ho do existující kolekce — není třeba vytvářet novou.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="about-section">
             <h3>Verdikty</h3>
             <div className="verdict-legend">
               <div className="legend-item">

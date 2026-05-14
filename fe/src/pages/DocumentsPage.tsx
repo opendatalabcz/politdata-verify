@@ -146,8 +146,9 @@ export default function DocumentsPage({ adminUnlocked }: { adminUnlocked: boolea
   const [url, setUrl]         = useState('')
   const [name, setName]       = useState('')
   const [collections, setCollections] = useState<string[]>([])
-  const [collection, setCol]  = useState('')
+  const [collection, setCol]  = useState('__new__')
   const [customCol, setCustomCol] = useState('')
+  const colNameValid = /^[a-zA-Z_][a-zA-Z0-9_]{0,254}$/.test(customCol)
   const [party, setParty]     = useState('')
   const [customParty, setCustomParty] = useState('')
   const [year, setYear]       = useState(2025)
@@ -177,6 +178,7 @@ export default function DocumentsPage({ adminUnlocked }: { adminUnlocked: boolea
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!url.trim() || !name.trim()) return
+    if (collection === '__new__' && !colNameValid) return
 
     setPhase('loading')
     setElapsed(0)
@@ -284,14 +286,19 @@ export default function DocumentsPage({ adminUnlocked }: { adminUnlocked: boolea
                   <option value="__new__">+ Nová kolekce…</option>
                 </select>
                 {collection === '__new__' && (
-                  <input
-                    type="text"
-                    value={customCol}
-                    onChange={e => setCustomCol(e.target.value)}
-                    placeholder="Název nové kolekce"
-                    style={{ marginTop: '8px' }}
-                    required
-                  />
+                  <>
+                    <input
+                      type="text"
+                      value={customCol}
+                      onChange={e => setCustomCol(e.target.value)}
+                      placeholder="napr_volby_2025"
+                      style={{ marginTop: '8px', borderColor: customCol && !colNameValid ? 'var(--red)' : undefined }}
+                    />
+                    {customCol && !colNameValid
+                      ? <span style={{ fontSize: '12px', color: 'var(--red)' }}>Pouze písmena, číslice a podtržítka. Musí začínat písmenem nebo _.</span>
+                      : <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Povolené znaky: a–z, A–Z, 0–9, _</span>
+                    }
+                  </>
                 )}
               </div>
               <div className="form-group form-group-narrow">

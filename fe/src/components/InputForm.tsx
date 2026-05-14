@@ -13,6 +13,8 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
   const [text, setText] = useState('')
   const [collections, setCollections] = useState<string[]>([])
   const [collection, setCollection] = useState('')
+  const [customCol, setCustomCol] = useState('')
+  const colNameValid = /^[a-zA-Z_][a-zA-Z0-9_]{0,254}$/.test(customCol)
   const [year, setYear] = useState(2025)
   const [mode, setMode] = useState<'sync' | 'async'>('async')
   const [submitting, setSubmitting] = useState(false)
@@ -22,7 +24,7 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
       .then(cols => {
         const names = cols.map(c => c.collection_name)
         setCollections(names)
-        if (names.length > 0) setCollection(names[0])
+        setCollection(names.length > 0 ? names[0] : '__new__')
       })
       .catch(() => {})
   }, [])
@@ -30,8 +32,10 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
+    if (collection === '__new__' && !colNameValid) return
     setSubmitting(true)
-    await onSubmit(text, collection, year, mode)
+    const resolvedCol = collection === '__new__' ? customCol.trim() : collection
+    await onSubmit(text, resolvedCol, year, mode)
     setSubmitting(false)
   }
 
@@ -63,15 +67,30 @@ export default function InputForm({ speakers, onOpenSpeakers, onSubmit, error }:
           <select
             id="collection"
             value={collection}
-            onChange={e => setCollection(e.target.value)}
+            onChange={e => {
+              setCollection(e.target.value)
+              if (e.target.value !== '__new__') setCustomCol('')
+            }}
             className="select-input"
-            disabled={collections.length === 0}
           >
-            {collections.length === 0
-              ? <option>Načítám…</option>
-              : collections.map(c => <option key={c} value={c}>{c}</option>)
-            }
+            {collections.map(c => <option key={c} value={c}>{c}</option>)}
+            <option value="__new__">+ Nová kolekce…</option>
           </select>
+          {collection === '__new__' && (
+            <>
+              <input
+                type="text"
+                value={customCol}
+                onChange={e => setCustomCol(e.target.value)}
+                placeholder="napr_volby_2025"
+                style={{ marginTop: '8px', borderColor: customCol && !colNameValid ? 'var(--red)' : undefined }}
+              />
+              {customCol && !colNameValid
+                ? <span style={{ fontSize: '12px', color: 'var(--red)' }}>Pouze písmena, číslice a podtržítka. Musí začínat písmenem nebo _.</span>
+                : <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Povolené znaky: a–z, A–Z, 0–9, _</span>
+              }
+            </>
+          )}
         </div>
         <div className="form-group form-group-narrow">
           <label htmlFor="year">Rok</label>

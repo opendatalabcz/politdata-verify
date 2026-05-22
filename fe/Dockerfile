@@ -8,7 +8,6 @@ RUN npm ci
 
 COPY . .
 
-ARG VITE_API_URL
 ARG VITE_API_KEY
 
 RUN npm run build
